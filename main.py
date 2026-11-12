@@ -1,10 +1,12 @@
+from weapon import Weapon
 from direct.gui.OnscreenText import OnscreenText
 from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
 from panda3d.core import (AmbientLight, ClockObject, DirectionalLight,
                             KeyboardButton, NodePath, Vec3, GraphicsWindow, WindowProperties, BitMask32,
                             CollisionBox, CollisionHandlerPusher, CollisionNode, CollisionPlane,
-                            CollisionSphere, CollisionTraverser, Plane, Point3,CardMaker, CollisionRay, CollisionHandlerQueue,
+                            CollisionSphere, CollisionTraverser, Plane,
+                            Point3,CardMaker, CollisionRay, CollisionHandlerQueue,
                             TextNode)
 class BreachShift(ShowBase):
 
@@ -100,6 +102,14 @@ class BreachShift(ShowBase):
 
         #Crosshair
         self.create_crosshair()
+
+        #Weapon
+        self.weapon = Weapon(
+            damage= 25,
+            fire_interval= 0.25,
+            magazine_size=12
+            )
+        self.setup_weapon_hud()
 
         #Shooting
         self.setup_shooting()
@@ -292,6 +302,13 @@ class BreachShift(ShowBase):
         if not window.getProperties().getForeground():
             return
 
+        now = self.clock.getFrameTime()
+
+        if not self.weapon.try_fire(now):
+            return
+
+        self.update_weapon_hud()
+
         #Aim through the center of the screen.
         self.shot_ray.setFromLens(camera_node, 0, 0)
         self.shot_queue.clearEntries()
@@ -310,6 +327,30 @@ class BreachShift(ShowBase):
 
         self.damage_target()
 
+    def reload_weapon(self):
+        window = self.win
+
+        if window is None or not isinstance(window, GraphicsWindow):
+            return
+
+        if not window.getProperties().getForeground():
+            return
+
+        if not self.weapon.start_reload():
+            return
+
+        self.update_weapon_hud()
+
+        self.taskMgr.doMethodLater(
+            self.weapon.reload_time,
+            self.finish_weapon_reload,
+            "reload-weapon"
+        )
+
+    def finish_weapon_reload(self,task):
+        self.weapon.finish_reload()
+        self.update_weapon_hud()
+        return Task.done
 
     def setup_shooting(self):
         camera = self.camera
@@ -355,11 +396,47 @@ class BreachShift(ShowBase):
         )
 
         self.accept("mouse1", self.shoot)
+        self.accept("r", self.reload_weapon)
+
+    def setup_weapon_hud(self):
+        self.weapon_hud = OnscreenText(
+            text="",
+            parent = self.a2dBottomRight,
+            pos = (-0.05, 0.10),
+            scale = 0.05,
+            fg = (1, 1, 1, 1),
+            shadow = (0, 0, 0, 1),
+            align = TextNode.ARight,
+            mayChange=True
+        )
+
+        self.update_weapon_hud()
+
+    def update_weapon_hud(self):
+        text = (
+            f"Ammo: {self.weapon.ammo}/{self.weapon.magazine_size}"
+            f" | Reserve: {self.weapon.reserve_ammo}"
+        )
+
+        if self.weapon.is_reloading:
+            text += "\nReloading..."
+        elif self.weapon.ammo < 5 and self.weapon.reserve_ammo != 0:
+            text += "\nR - Emergency Reload"
+        elif self.weapon.ammo == 0 and self.weapon.reserve_ammo == 0:
+            text += "\nOut of ammo"
+        elif self.weapon.reserve_ammo == 0:
+            text += "\nNo reserve ammo"
+        elif self.weapon.ammo == self.weapon.magazine_size:
+            text += "\nMagazine full"
+        else:
+            text += "\nR - Reload"
+
+        self.weapon_hud.setText(text)
 
     def setup_target(self):
         self.target_max_health = 100
         self.target_health = self.target_max_health
-        self.weapon_damage = 25
+
 
         self.target_hud = OnscreenText(
             text="",
@@ -373,7 +450,7 @@ class BreachShift(ShowBase):
         )
 
         self.update_target_hud()
-        self.accept("r", self.restart_training)
+        self.accept("t", self.restart_training)
 
     def update_target_hud(self):
         text = (
@@ -383,7 +460,7 @@ class BreachShift(ShowBase):
         if self.target_health == 0:
             text += "\nTarget destroyed!"
 
-        text += "\nR - Restart training"
+        text += "\nT - Restart training"
         self.target_hud.setText(text)
 
     def damage_target(self):
@@ -392,7 +469,7 @@ class BreachShift(ShowBase):
 
         self.target_health = max(
             0,
-            self.target_health - self.weapon_damage
+            self.target_health - self.weapon.damage
         )
         self.update_target_hud()
 
@@ -413,6 +490,10 @@ class BreachShift(ShowBase):
 
     def restart_training(self):
         self.taskMgr.remove("reset-crate-color")
+        self.taskMgr.remove("reload-weapon")
+
+        self.weapon.reset()
+        self.update_weapon_hud()
 
         #Reset the player before restoring the target.
         self.player.setPos(0, -2, 0)
