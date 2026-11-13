@@ -44,12 +44,7 @@ class BreachShift(ShowBase):
         self.floor.setColor(0.25, 0.28, 0.32, 1)
 
         #Training target
-        self.target = Target(
-        parent = self.render,
-        model=self.load_single_model("models/box"),
-        position=Point3(-1, 5, 0),
-        max_health= 100
-        )
+        self.create_targets()
 
         #Ambient Light
         ambient = AmbientLight("ambient")
@@ -128,6 +123,24 @@ class BreachShift(ShowBase):
                 raise RuntimeError(f"Failed to load model: {path}")
 
             return model
+
+    def create_targets(self):
+        positions = (
+            Point3(-1, 5, 0),
+            Point3(-5, 9, 0),
+            Point3(3, 9, 0)
+        )
+        self.targets: dict[str, Target] = {}
+
+        for index, position in enumerate(positions, start = 1):
+            name = f"target-{index}"
+            self.targets[name] = Target(
+                parent=self.render,
+                model=self.load_single_model("models/box"),
+                position=position,
+                max_health=100,
+                name=name
+            )
 
     def create_crosshair(self):
         gap = 0.012
@@ -276,8 +289,8 @@ class BreachShift(ShowBase):
         self.collision_traverser.traverse(self.render)
         return Task.cont
 
-    def reset_crate_color(self, task):
-        self.target.restore_color()
+    def reset_target_color(self, target: Target, task):
+        target.restore_color()
         return Task.done
 
     def shoot(self):
@@ -314,10 +327,13 @@ class BreachShift(ShowBase):
         entry = self.shot_queue.getEntry(0)
         hit_object = entry.getIntoNodePath()
 
-        if hit_object.getNetTag("target") != "crate":
-            return
+        target_name = hit_object.getNetTag("target")
+        target = self.targets.get(target_name)
 
-        self.damage_target()
+        if target is not None:
+            self.damage_target(target)
+
+
 
     def reload_weapon(self):
         window = self.win
@@ -352,7 +368,10 @@ class BreachShift(ShowBase):
         shot_mask = BitMask32.bit(2)
 
         #Enable shots on the existing colliders.
-        for collider in (self.target.collider, self.arena_boundaries):
+        colliders = [target.collider for target in self.targets.values()]
+        colliders.append(self.arena_boundaries)
+
+        for collider in colliders:
             node = collider.node()
             node.setIntoCollideMask(
                 node.getIntoCollideMask() | shot_mask
@@ -441,36 +460,47 @@ class BreachShift(ShowBase):
         self.accept("t", self.restart_training)
 
     def update_target_hud(self):
-        text = (
-            f"Target HP: "
-            f"{self.target.health}/{self.target.max_health}"
-        )
-        if self.target.health == 0:
-            text += "\nTarget destroyed!"
+        lines = []
+        destroyed = 0
 
-        text += "\nT - Restart training"
-        self.target_hud.setText(text)
+        for index,target in enumerate(self.targets.values(), start=1):
+            if target.health == 0:
+                destroyed += 1
+                lines.append(f"Target {index}: Destroyed")
+            else:
+                lines.append(
+                    f"Target {index}: {target.health}/{target.max_health} HP"
+                )
+        lines.append(f"Destroyed: {destroyed}/{len(self.targets)}")
 
-    def damage_target(self):
-        if not self.target.take_damage(self.weapon.damage):
+        if destroyed == len(self.targets):
+            lines.append("Training complete!")
+
+        lines.append("T - Restart Training")
+        self.target_hud.setText("\n".join(lines))
+
+    def damage_target(self, target: Target):
+        if not target.take_damage(self.weapon.damage):
             return
-
         self.update_target_hud()
-        self.taskMgr.remove("reset-crate-color")
 
-        if self.target.health == 0:
+        task_name = f"reset-color-{target.name}"
+        self.taskMgr.remove(task_name)
+
+        if target.health == 0:
             return
 
-        self.target.flash_hit()
+        target.flash_hit()
 
         self.taskMgr.doMethodLater(
             0.15,
-            self.reset_crate_color,
-            "reset-crate-color"
+            self.reset_target_color,
+            task_name,
+            extraArgs=[target],
+            appendTask= True
         )
 
     def restart_training(self):
-        self.taskMgr.remove("reset-crate-color")
         self.taskMgr.remove("reload-weapon")
 
         self.weapon.reset()
@@ -489,7 +519,9 @@ class BreachShift(ShowBase):
         self.mouse_ready = False
 
         #Restore the target.
-        self.target.reset()
+        for target in self.targets.values():
+            self.taskMgr.remove(f"reset-color-{target.name}")
+            target.reset()
         self.update_target_hud()
 
 

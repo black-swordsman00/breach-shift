@@ -13,13 +13,15 @@ class Target:
                 parent: NodePath,
                 model: NodePath,
                 position: Point3,
-                max_health: int = 100
+                max_health: int = 100,
+                name: str = "target"
                 ) -> None:
+        self.name = name
         self.max_health = max_health
         self.default_color = (0.85, 0.2, 0.12, 1.0)
 
         #Keep model and collider under one unscaled root.
-        self.root = parent.attachNewNode("target")
+        self.root = parent.attachNewNode(self.name)
         self.root.setPos(position)
 
         self.model = model
@@ -29,7 +31,7 @@ class Target:
         self.model.setTextureOff(1)
         self.model.setCollideMask(BitMask32.allOff())
 
-        collider_node = CollisionNode("target-collider")
+        collider_node = CollisionNode(f"{self.name}-collider")
         collider_node.addSolid(
             CollisionBox(Point3(0, 0, 0), Point3(2, 2, 2))
         )
@@ -37,7 +39,7 @@ class Target:
         collider_node.setIntoCollideMask(BitMask32.bit(1))
 
         self.collider = self.root.attachNewNode(collider_node)
-        self.collider.setTag("target", "crate")
+        self.collider.setTag("target", self.name)
 
         self.reset()
 
