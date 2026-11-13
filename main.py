@@ -101,8 +101,9 @@ class BreachShift(ShowBase):
         #Collision setup
         self.setup_collisions()
 
-        #Crosshair
+        # Crosshair and hitmarker
         self.create_crosshair()
+        self.create_hitmarker()
 
         #Weapon
         self.weapon = Weapon(
@@ -162,6 +163,7 @@ class BreachShift(ShowBase):
         length = 0.022
         thickness = 0.009
 
+
         #Create one rectangular arm.
         card = CardMaker("crosshair-arm")
         card.setFrame(
@@ -180,6 +182,44 @@ class BreachShift(ShowBase):
             arm = self.crosshair.attachNewNode(f"arm-{rotation}")
             arm.setR(rotation)
             arm.attachNewNode(arm_node)
+
+    def create_hitmarker(self):
+        gap = 0.040
+        length = 0.025
+        thickness = 0.006
+
+        card = CardMaker("hitmarker-arm")
+        card.setFrame(
+            gap,
+            gap + length,
+            -thickness / 2,
+            thickness / 2,
+        )
+        arm_node = card.generate()
+
+        self.hitmarker = self.aspect2d.attachNewNode("hitmarker")
+        self.hitmarker.setColor(1, 1, 1, 1)
+
+        for rotation in (45, 135, 225, 315):
+            arm = self.hitmarker.attachNewNode(f"arm-{rotation}")
+            arm.setR(rotation)
+            arm.attachNewNode(arm_node)
+
+        self.hitmarker.hide()
+
+    def show_hitmarker(self):
+        self.taskMgr.remove("hide-hitmarker")
+        self.hitmarker.show()
+
+        self.taskMgr.doMethodLater(
+            0.12,
+            self.hide_hitmarker,
+            "hide-hitmarker",
+        )
+
+    def hide_hitmarker(self, task):
+        self.hitmarker.hide()
+        return Task.done
 
     def update_movement(self, task):
         keyboard = self.mouseWatcherNode
@@ -497,6 +537,8 @@ class BreachShift(ShowBase):
     def damage_target(self, target: Target):
         if not target.take_damage(self.weapon.damage):
             return
+
+        self.show_hitmarker()
         self.update_target_hud()
 
         task_name = f"reset-color-{target.name}"
@@ -516,6 +558,8 @@ class BreachShift(ShowBase):
         )
 
     def restart_training(self):
+        self.taskMgr.remove("hide-hitmarker")
+        self.hitmarker.hide()
         self.taskMgr.remove("reload-weapon")
 
         self.weapon.reset()
