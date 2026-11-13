@@ -1,3 +1,4 @@
+from target import Target
 from weapon import Weapon
 from direct.gui.OnscreenText import OnscreenText
 from direct.showbase.ShowBase import ShowBase
@@ -434,8 +435,7 @@ class BreachShift(ShowBase):
         self.weapon_hud.setText(text)
 
     def setup_target(self):
-        self.target_max_health = 100
-        self.target_health = self.target_max_health
+        self.target = Target(max_health=100)
 
 
         self.target_hud = OnscreenText(
@@ -455,27 +455,22 @@ class BreachShift(ShowBase):
     def update_target_hud(self):
         text = (
             f"Target HP: "
-            f"{self.target_health}/{self.target_max_health}"
+            f"{self.target.health}/{self.target.max_health}"
         )
-        if self.target_health == 0:
+        if self.target.health == 0:
             text += "\nTarget destroyed!"
 
         text += "\nT - Restart training"
         self.target_hud.setText(text)
 
     def damage_target(self):
-        if self.target_health <= 0:
+        if not self.target.take_damage(self.weapon.damage):
             return
 
-        self.target_health = max(
-            0,
-            self.target_health - self.weapon.damage
-        )
         self.update_target_hud()
-
         self.taskMgr.remove("reset-crate-color")
 
-        if self.target_health == 0:
+        if self.target.health == 0:
             self.crate.stash()
             self.crate_collider.stash()
             return
@@ -508,7 +503,7 @@ class BreachShift(ShowBase):
         self.mouse_ready = False
 
         #Restore the target.
-        self.target_health = self.target_max_health
+        self.target.reset()
         self.crate.setColor(self.crate_default_color)
         self.crate.unstash()
         self.crate_collider.unstash()
