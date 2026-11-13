@@ -64,6 +64,11 @@ class BreachShift(ShowBase):
         self.move_speed = 5.0
         self.clock = ClockObject.getGlobalClock()
         self.taskMgr.add(self.update_movement, "update-movement")
+        self.taskMgr.add(
+            self.update_targets,
+            "update-targets",
+            sort=5
+        )
 
         #Mouse look
         self.mouse_sensitivity = 0.15
@@ -139,8 +144,18 @@ class BreachShift(ShowBase):
                 model=self.load_single_model("models/box"),
                 position=position,
                 max_health=100,
-                name=name
+                name=name,
+                move_speed= 2.0 if index == 2 else 0.0,
+                move_range= 3.0 if index == 2 else 0.0
             )
+
+    def update_targets(self, task):
+        dt = min(self.clock.getDt(), 0.05)
+
+        for target in self.targets.values():
+            target.update_movement(dt)
+
+        return Task.cont
 
     def create_crosshair(self):
         gap = 0.012
