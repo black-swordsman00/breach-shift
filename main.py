@@ -1,3 +1,4 @@
+from target import Target
 from weapon import Weapon
 from direct.gui.OnscreenText import OnscreenText
 from direct.showbase.ShowBase import ShowBase
@@ -42,13 +43,13 @@ class BreachShift(ShowBase):
         self.floor.setTextureOff(1)
         self.floor.setColor(0.25, 0.28, 0.32, 1)
 
-        #Red Crate
-        self.crate = self.load_single_model("models/box")
-        self.crate.reparentTo(self.render)
-        self.crate.setScale(2, 2, 2)
-        self.crate.setPos(-1, 5, 0)
-        self.crate.setTextureOff(1)
-        self.crate.setColor(0.85, 0.2, 0.12, 1)
+        #Training target
+        self.target = Target(
+        parent = self.render,
+        model=self.load_single_model("models/box"),
+        position=Point3(-1, 5, 0),
+        max_health= 100
+        )
 
         #Ambient Light
         ambient = AmbientLight("ambient")
@@ -225,7 +226,6 @@ class BreachShift(ShowBase):
 
         #Use dedicated collision shapes for the visible models.
         self.floor.setCollideMask(BitMask32.allOff())
-        self.crate.setCollideMask(BitMask32.allOff())
 
         self.collision_traverser = CollisionTraverser("world-collisions")
         self.collision_pusher = CollisionHandlerPusher()
@@ -246,15 +246,7 @@ class BreachShift(ShowBase):
             self.player_collider, self.collision_pusher
         )
 
-        #Static crate collision shape in world coordinates
-        crate_node = CollisionNode("crate-collider")
-        crate_node.addSolid(
-            CollisionBox(Point3(-1, 5, 0), Point3(1,7,2))
-        )
-        crate_node.setFromCollideMask(BitMask32.allOff())
-        crate_node.setIntoCollideMask(collision_mask)
 
-        self.crate_collider = self.render.attachNewNode(crate_node)
 
         #Arena boundaries, with normals pointing inward
         boundaries_node = CollisionNode("arena-boundaries")
@@ -285,7 +277,7 @@ class BreachShift(ShowBase):
         return Task.cont
 
     def reset_crate_color(self, task):
-        self.crate.setColor(self.crate_default_color)
+        self.target.restore_color()
         return Task.done
 
     def shoot(self):
@@ -358,15 +350,13 @@ class BreachShift(ShowBase):
             raise RuntimeError("Shooting requires a camera.")
 
         shot_mask = BitMask32.bit(2)
-        self.crate_default_color = self.crate.getColor()
 
         #Enable shots on the existing colliders.
-        for collider in (self.crate_collider, self.arena_boundaries):
+        for collider in (self.target.collider, self.arena_boundaries):
             node = collider.node()
             node.setIntoCollideMask(
                 node.getIntoCollideMask() | shot_mask
             )
-        self.crate_collider.setTag("target","crate")
 
         #The floor blocks shots.
         floor_node = CollisionNode("shot-floor")
@@ -434,8 +424,6 @@ class BreachShift(ShowBase):
         self.weapon_hud.setText(text)
 
     def setup_target(self):
-        self.target_max_health = 100
-        self.target_health = self.target_max_health
 
 
         self.target_hud = OnscreenText(
@@ -455,32 +443,25 @@ class BreachShift(ShowBase):
     def update_target_hud(self):
         text = (
             f"Target HP: "
-            f"{self.target_health}/{self.target_max_health}"
+            f"{self.target.health}/{self.target.max_health}"
         )
-        if self.target_health == 0:
+        if self.target.health == 0:
             text += "\nTarget destroyed!"
 
         text += "\nT - Restart training"
         self.target_hud.setText(text)
 
     def damage_target(self):
-        if self.target_health <= 0:
+        if not self.target.take_damage(self.weapon.damage):
             return
 
-        self.target_health = max(
-            0,
-            self.target_health - self.weapon.damage
-        )
         self.update_target_hud()
-
         self.taskMgr.remove("reset-crate-color")
 
-        if self.target_health == 0:
-            self.crate.stash()
-            self.crate_collider.stash()
+        if self.target.health == 0:
             return
 
-        self.crate.setColor(1.0, 0.85, 0.15, 1.0)
+        self.target.flash_hit()
 
         self.taskMgr.doMethodLater(
             0.15,
@@ -508,12 +489,9 @@ class BreachShift(ShowBase):
         self.mouse_ready = False
 
         #Restore the target.
-        self.target_health = self.target_max_health
-        self.crate.setColor(self.crate_default_color)
-        self.crate.unstash()
-        self.crate_collider.unstash()
-
+        self.target.reset()
         self.update_target_hud()
+
 
 
 if __name__ == "__main__":
