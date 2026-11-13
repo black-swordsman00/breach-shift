@@ -13,13 +13,20 @@ class Target:
                 parent: NodePath,
                 model: NodePath,
                 position: Point3,
-                max_health: int = 100
+                max_health: int = 100,
+                name: str = "target",
+                move_speed: float = 0.0,
+                move_range: float = 0.0
                 ) -> None:
+        self.name = name
         self.max_health = max_health
         self.default_color = (0.85, 0.2, 0.12, 1.0)
+        self.start_position = Point3(position)
+        self.move_speed = move_speed
+        self.move_range = move_range
 
         #Keep model and collider under one unscaled root.
-        self.root = parent.attachNewNode("target")
+        self.root = parent.attachNewNode(self.name)
         self.root.setPos(position)
 
         self.model = model
@@ -29,7 +36,7 @@ class Target:
         self.model.setTextureOff(1)
         self.model.setCollideMask(BitMask32.allOff())
 
-        collider_node = CollisionNode("target-collider")
+        collider_node = CollisionNode(f"{self.name}-collider")
         collider_node.addSolid(
             CollisionBox(Point3(0, 0, 0), Point3(2, 2, 2))
         )
@@ -37,7 +44,7 @@ class Target:
         collider_node.setIntoCollideMask(BitMask32.bit(1))
 
         self.collider = self.root.attachNewNode(collider_node)
-        self.collider.setTag("target", "crate")
+        self.collider.setTag("target", self.name)
 
         self.reset()
 
@@ -52,6 +59,27 @@ class Target:
 
         return True
 
+    def update_movement(self, dt: float) -> None:
+        if(
+            self.health <= 0
+            or self.move_speed <= 0
+            or self.move_range <= 0
+        ):
+            return
+        minimum_x = self.start_position.x - self.move_range
+        maximum_x = self.start_position.x + self.move_range
+        x = self.root.getX() + self.move_direction * self.move_speed * dt
+
+        if x >= maximum_x:
+            x = maximum_x
+            self.move_direction = -1
+        elif x <= minimum_x:
+            x = minimum_x
+            self.move_direction = 1
+
+        self.root.setX(x)
+
+
     def flash_hit(self) -> None:
         self.model.setColor(1.0, 0.85, 0.15, 1.0)
 
@@ -60,5 +88,7 @@ class Target:
 
     def reset(self) -> None:
         self.health = self.max_health
+        self.move_direction = 1
+        self.root.setPos(self.start_position)
         self.restore_color()
         self.root.unstash()
