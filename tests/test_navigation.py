@@ -22,17 +22,21 @@ class NavigationTests(unittest.TestCase):
     def test_spawns_and_objectives_remain_reachable_in_every_map(self):
         for level in load_levels():
             with self.subTest(level=level.name):
-                normal = NavigationGrid(level.blocks, Reality.NORMAL)
-                breach = NavigationGrid(level.blocks, Reality.BREACH)
-                self.assertTrue(breach.find_path((0, -2), level.core))
+                normal = NavigationGrid(level.blocks, Reality.NORMAL, level.bounds, cell_size=1)
+                breach = NavigationGrid(level.blocks, Reality.BREACH, level.bounds, cell_size=1)
+                self.assertTrue(breach.find_path(level.player_spawn, level.core))
                 self.assertTrue(normal.find_path(level.core, level.exit))
-                self.assertFalse(normal.find_path((0, -2), level.core))
+                self.assertFalse(normal.find_path(level.player_spawn, level.core))
                 self.assertFalse(breach.find_path(level.core, level.exit))
                 for grid in (normal, breach):
                     self.assertTrue(grid.is_free(*level.core))
                     self.assertTrue(grid.is_free(*level.exit))
+                    self.assertTrue(grid.is_free(*level.player_spawn))
                     for spawn in level.spawns:
                         self.assertTrue(grid.is_free(spawn.x, spawn.y), spawn)
+                for spawn in level.spawns:
+                    self.assertTrue(breach.find_path(level.player_spawn, (spawn.x, spawn.y))
+                                    or normal.find_path(level.core, (spawn.x, spawn.y)), spawn)
 
     def test_nearest_ground_handles_blocked_goals_and_map_edges(self):
         grid = NavigationGrid((Block(0, 0, 2, 2, 2),), Reality.NORMAL)
