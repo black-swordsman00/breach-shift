@@ -1,8 +1,8 @@
 import heapq
 from math import ceil, floor, hypot
 
-from level_data import Block, MapBounds
-from reality import Reality
+from breach_shift.world.levels import Block, MapBounds
+from breach_shift.world.reality import Reality
 
 
 Cell = tuple[int, int]

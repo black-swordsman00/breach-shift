@@ -1,14 +1,16 @@
 import json
+from importlib.resources import files
+import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from level_data import MapBounds, load_levels
+from breach_shift.world.levels import MapBounds, load_levels
 
 
 class LevelDataTests(unittest.TestCase):
     def setUp(self):
-        path = Path(__file__).resolve().parents[1] / "levels" / "01_quarantine_yard.json"
+        path = files("breach_shift").joinpath("data", "levels", "01_quarantine_yard.json")
         self.data = json.loads(path.read_text(encoding="utf-8"))
 
     def load_data(self):
@@ -25,6 +27,18 @@ class LevelDataTests(unittest.TestCase):
         self.assertEqual(level.player_spawn, (20, -10))
         self.assertEqual(level.blocks[0].width, 60)
         self.assertEqual(level.blocks[1].width, 60)
+
+    def test_packaged_levels_load_outside_the_project_directory(self):
+        previous_directory = Path.cwd()
+        with TemporaryDirectory() as directory:
+            try:
+                os.chdir(directory)
+                levels = load_levels()
+            finally:
+                os.chdir(previous_directory)
+        self.assertEqual(len(levels), 10)
+        self.assertEqual(levels[0].name, "Quarantine Yard")
+        self.assertEqual(levels[-1].name, "Breach Core")
 
     def test_legacy_levels_keep_the_training_sized_defaults(self):
         self.data.pop("bounds", None)

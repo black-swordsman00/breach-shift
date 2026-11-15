@@ -4,12 +4,12 @@ from unittest.mock import MagicMock, patch
 
 from panda3d.core import Camera, ClockObject, GraphicsWindow, KeyboardButton, NodePath, Point3
 
-from campaign_game import CampaignGame
-from level_data import MapBounds
-from reality import Reality
-from training_session import TrainingSession
-from weapon import Weapon
-from zombie_catalog import ZombieKind
+from breach_shift.campaign.game import CampaignGame
+from breach_shift.world.levels import MapBounds
+from breach_shift.world.reality import Reality
+from breach_shift.training.session import TrainingSession
+from breach_shift.combat.weapon import Weapon
+from breach_shift.enemies.catalog import ZombieKind
 
 
 class CampaignIntegrationTests(unittest.TestCase):
@@ -56,7 +56,7 @@ class CampaignIntegrationTests(unittest.TestCase):
         game.weapon_hud = MagicMock()
         game.target_hud = MagicMock()
         game.training_hud = MagicMock()
-        with patch("campaign_game.OnscreenText"):
+        with patch("breach_shift.campaign.game.OnscreenText"):
             game.setup_campaign()
         self.campaign_hud = MagicMock()
         game.campaign_hud = self.campaign_hud

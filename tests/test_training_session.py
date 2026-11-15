@@ -1,6 +1,6 @@
 import unittest
 
-from training_session import TrainingSession
+from breach_shift.training.session import TrainingSession
 
 
 class TrainingSessionTests(unittest.TestCase):

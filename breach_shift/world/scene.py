@@ -1,8 +1,8 @@
 from panda3d.core import BitMask32, CollisionBox, CollisionNode, NodePath, Point3
 
-from level_data import Block, LevelDefinition
-from navigation import NavigationGrid
-from reality import Reality
+from breach_shift.world.levels import Block, LevelDefinition
+from breach_shift.world.navigation import NavigationGrid
+from breach_shift.world.reality import Reality
 
 
 class CampaignWorld:

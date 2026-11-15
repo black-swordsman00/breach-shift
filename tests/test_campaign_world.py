@@ -2,9 +2,9 @@ import unittest
 
 from panda3d.core import BitMask32, CollisionHandlerQueue, CollisionNode, CollisionSegment, CollisionTraverser, NodePath, Point3
 
-from campaign_world import CampaignWorld
-from level_data import load_levels
-from reality import Reality
+from breach_shift.world.scene import CampaignWorld
+from breach_shift.world.levels import load_levels
+from breach_shift.world.reality import Reality
 
 
 class CampaignWorldTests(unittest.TestCase):

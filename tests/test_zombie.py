@@ -2,11 +2,11 @@ import unittest
 
 from panda3d.core import NodePath, Point3
 
-from navigation import NavigationGrid
-from level_data import Block
-from reality import Reality
-from zombie import Zombie
-from zombie_catalog import ZombieKind
+from breach_shift.world.navigation import NavigationGrid
+from breach_shift.world.levels import Block
+from breach_shift.world.reality import Reality
+from breach_shift.enemies.zombie import Zombie
+from breach_shift.enemies.catalog import ZombieKind
 
 
 class ZombieTests(unittest.TestCase):

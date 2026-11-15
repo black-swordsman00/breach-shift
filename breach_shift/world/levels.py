@@ -1,10 +1,11 @@
 from dataclasses import dataclass
+from importlib.resources import files
 import json
 from math import isfinite
 from pathlib import Path
 
-from reality import Reality
-from zombie_catalog import ZOMBIE_ORDER, ZombieKind
+from breach_shift.world.reality import Reality
+from breach_shift.enemies.catalog import ZOMBIE_ORDER, ZombieKind
 
 
 @dataclass(frozen=True)
@@ -74,9 +75,12 @@ class LevelDefinition:
 
 
 def load_levels(directory: Path | None = None) -> tuple[LevelDefinition, ...]:
-    directory = directory or Path(__file__).with_name("levels")
+    level_directory = directory if directory is not None else files("breach_shift").joinpath("data", "levels")
+    if not level_directory.is_dir():
+        raise ValueError("Campaign level data is missing.")
     levels = []
-    for path in sorted(directory.glob("*.json")):
+    for path in sorted((entry for entry in level_directory.iterdir()
+                        if entry.is_file() and entry.name.endswith(".json")), key=lambda entry: entry.name):
         data = json.loads(path.read_text(encoding="utf-8"))
         number = data["number"]
         if number != len(levels) + 1 or not 1 <= number <= len(ZOMBIE_ORDER):

@@ -6,15 +6,15 @@ from panda3d.core import (BitMask32, CollisionHandlerQueue, CollisionNode, Colli
                          CollisionSegment, CollisionTraverser, GraphicsWindow,
                          NodePath, Plane, Point3, TextNode, Vec3)
 
-from campaign_state import CampaignProgress
-from campaign_world import CampaignWorld
-from level_data import load_levels
-from main import BreachShift
-from player_health import PlayerHealth
-from reality import Reality, RealityShift
-from target import Target
-from zombie import Zombie
-from zombie_catalog import ZombieKind
+from breach_shift.campaign.state import CampaignProgress
+from breach_shift.world.scene import CampaignWorld
+from breach_shift.world.levels import load_levels
+from breach_shift.core.game import BreachShift
+from breach_shift.player.health import PlayerHealth
+from breach_shift.world.reality import Reality, RealityShift
+from breach_shift.combat.target import Target
+from breach_shift.enemies.zombie import Zombie
+from breach_shift.enemies.catalog import ZombieKind
 
 
 @dataclass
@@ -26,7 +26,7 @@ class SpitProjectile:
 
 
 class CampaignGame(BreachShift):
-    """Run the zombie campaign while keeping the original training entry point."""
+    """Run the zombie campaign on top of the shared first-person game systems."""
 
     def __init__(self):
         self.campaign_ready = False
@@ -368,6 +368,3 @@ class CampaignGame(BreachShift):
         return Task.cont
 
 
-if __name__ == "__main__":
-    game = CampaignGame()
-    game.run()

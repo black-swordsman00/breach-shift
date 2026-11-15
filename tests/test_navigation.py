@@ -1,8 +1,8 @@
 import unittest
 
-from level_data import Block, MapBounds, load_levels
-from navigation import NavigationGrid
-from reality import Reality
+from breach_shift.world.levels import Block, MapBounds, load_levels
+from breach_shift.world.navigation import NavigationGrid
+from breach_shift.world.reality import Reality
 
 
 class NavigationTests(unittest.TestCase):

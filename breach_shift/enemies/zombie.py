@@ -3,10 +3,10 @@ from math import hypot, pi, sin
 
 from panda3d.core import BitMask32, CollisionBox, NodePath, Point3, Vec3
 
-from navigation import NavigationGrid, Position
-from reality import Reality
-from target import Target
-from zombie_catalog import ZOMBIE_SPECS, ZombieKind
+from breach_shift.world.navigation import NavigationGrid, Position
+from breach_shift.world.reality import Reality
+from breach_shift.combat.target import Target
+from breach_shift.enemies.catalog import ZOMBIE_SPECS, ZombieKind
 
 
 @dataclass(frozen=True)

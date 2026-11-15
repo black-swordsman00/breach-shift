@@ -4,9 +4,9 @@ from unittest.mock import MagicMock, patch
 from direct.task import Task
 from panda3d.core import Camera, ClockObject, GraphicsWindow, NodePath, Point3
 
-from main import BreachShift
-from training_session import TrainingSession
-from weapon import Weapon
+from breach_shift.core.game import BreachShift
+from breach_shift.training.session import TrainingSession
+from breach_shift.combat.weapon import Weapon
 
 
 class TrainingIntegrationTests(unittest.TestCase):
@@ -251,7 +251,7 @@ class TrainingIntegrationTests(unittest.TestCase):
     def test_training_hud_uses_top_right_anchor(self):
         game = self.game
         game.a2dTopRight = game.aspect2d.attachNewNode("top-right")
-        with patch("main.OnscreenText") as onscreen_text:
+        with patch("breach_shift.core.game.OnscreenText") as onscreen_text:
             game.setup_training_hud()
         self.assertIs(onscreen_text.call_args.kwargs["parent"], game.a2dTopRight)
         self.assertEqual(onscreen_text.call_args.kwargs["pos"], (-0.05, -0.10))

@@ -1,6 +1,6 @@
 import unittest
 
-from player_jump import PlayerJump
+from breach_shift.player.jump import PlayerJump
 
 
 class PlayerJumpTests(unittest.TestCase):
