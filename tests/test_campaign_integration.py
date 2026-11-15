@@ -58,6 +58,8 @@ class CampaignIntegrationTests(unittest.TestCase):
         game.training_hud = MagicMock()
         with patch("campaign_game.OnscreenText"):
             game.setup_campaign()
+        self.campaign_hud = MagicMock()
+        game.campaign_hud = self.campaign_hud
         self.level = game.levels[0]
         self.initial_enemies = game.enemies_remaining
 
@@ -263,3 +265,20 @@ class CampaignIntegrationTests(unittest.TestCase):
                         game.update_collisions(None)
                     distance = (game.player.getPos() - start).length()
                     self.assertAlmostEqual(distance, 6.5, places=4)
+
+    def test_objective_guidance_tracks_player_direction_and_nearby_interactions(self):
+        game = self.game
+        game.player.setPos(0, 0, 0)
+        game.player.setH(0)
+        self.assertEqual(game.navigation_hint((0, 10)), "10m ahead")
+        self.assertEqual(game.navigation_hint((10, 0)), "10m right")
+        self.assertEqual(game.navigation_hint((-10, 0)), "10m left")
+        self.assertEqual(game.navigation_hint((0, -10)), "10m behind")
+        game.player.setH(180)
+        self.assertEqual(game.navigation_hint((0, 10)), "10m behind")
+        self.assertEqual(game.navigation_hint((0, 1)), "Nearby")
+        game.update_campaign_hud()
+        self.assertIn("Core: Breach |", self.campaign_hud.setText.call_args.args[0])
+        game.progress.collect_core()
+        game.update_campaign_hud()
+        self.assertIn("Core: Recovered", self.campaign_hud.setText.call_args.args[0])

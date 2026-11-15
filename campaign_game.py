@@ -329,16 +329,28 @@ class CampaignGame(BreachShift):
         self.progress.retry()
         self.load_level()
 
+    def navigation_hint(self, destination: tuple[float, float]) -> str:
+        offset = self.player.getRelativePoint(self.render, Point3(*destination, self.player.getZ()))
+        distance = Vec3(offset.x, offset.y, 0).length()
+        if distance <= 2:
+            return "Nearby"
+        if abs(offset.x) > abs(offset.y):
+            direction = "right" if offset.x > 0 else "left"
+        else:
+            direction = "ahead" if offset.y > 0 else "behind"
+        return f"{distance:.0f}m {direction}"
+
     def update_campaign_hud(self, task=None):
         level = self.levels[self.progress.level_index]
         remaining = self.enemies_remaining
         ready = self.progress.can_exit(remaining)
         if self.world is not None:
             self.world.set_exit_ready(ready)
+        core = "Recovered" if self.progress.core_collected else f"Breach | {self.navigation_hint(level.core)}"
+        exit_hint = f"{'E - Enter' if ready else 'Locked'} | {self.navigation_hint(level.exit)}"
         text = (f"Map {level.number}/{len(self.levels)}: {level.name}\n"
                 f"New zombie: {level.introduced.value.title()}\nZombies remaining: {remaining}\n"
-                f"Core: {'Recovered' if self.progress.core_collected else 'Find in Breach'}\n"
-                f"Exit: {'E - Enter' if ready else 'Locked'}")
+                f"Core: {core}\nExit: {exit_hint}")
         if self.progress.complete:
             text = f"Campaign complete!\nAll {len(self.levels)} maps survived.\nT - Play again"
         elif not self.player_health.is_alive:
