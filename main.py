@@ -1,4 +1,5 @@
 from target import Target
+from training_session import TrainingSession
 from weapon import Weapon
 from direct.gui.OnscreenText import OnscreenText
 from direct.showbase.ShowBase import ShowBase
@@ -118,6 +119,10 @@ class BreachShift(ShowBase):
 
         #Target health and training controls
         self.setup_target()
+
+        #Training session statistics
+        self.training_session = TrainingSession()
+        self.setup_training_hud()
 
 
     def load_single_model(self, path: str) -> NodePath:
@@ -367,6 +372,8 @@ class BreachShift(ShowBase):
         if not self.weapon.try_fire(now):
             return
 
+        self.training_session.record_shot(now)
+        self.update_training_hud()
         self.update_weapon_hud()
 
         #Aim through the center of the screen.
@@ -538,6 +545,11 @@ class BreachShift(ShowBase):
         if not target.take_damage(self.weapon.damage):
             return
 
+        self.training_session.record_hit()
+        if all(target.health == 0 for target in self.targets.values()):
+            self.training_session.finish(self.clock.getFrameTime())
+        self.update_training_hud()
+
         self.show_hitmarker()
         self.update_target_hud()
 
@@ -556,6 +568,31 @@ class BreachShift(ShowBase):
             extraArgs=[target],
             appendTask= True
         )
+
+    def setup_training_hud(self):
+        self.training_hud = OnscreenText(
+            text="",
+            parent=self.a2dTopRight,
+            pos=(-0.05, -0.10),
+            scale=0.045,
+            fg=(1, 1, 1, 1),
+            shadow=(0, 0, 0, 1),
+            align=TextNode.ARight,
+            mayChange=True
+        )
+        self.update_training_hud()
+        self.taskMgr.add(self.update_training_hud, "update-training-hud", sort=15)
+
+    def update_training_hud(self, task=None):
+        session = self.training_session
+        elapsed = session.elapsed_time(self.clock.getFrameTime())
+        status = "Complete" if session.is_complete else "Time"
+        self.training_hud.setText(
+            f"Shots: {session.shots} | Hits: {session.hits}\n"
+            f"Accuracy: {session.accuracy:.1f}%\n"
+            f"{status}: {elapsed:.2f}s"
+        )
+        return Task.cont
 
     def restart_training(self):
         self.taskMgr.remove("hide-hitmarker")
@@ -582,6 +619,8 @@ class BreachShift(ShowBase):
             self.taskMgr.remove(f"reset-color-{target.name}")
             target.reset()
         self.update_target_hud()
+        self.training_session.reset()
+        self.update_training_hud()
 
 
 
