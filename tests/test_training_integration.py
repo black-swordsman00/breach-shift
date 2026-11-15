@@ -15,9 +15,11 @@ class TrainingIntegrationTests(unittest.TestCase):
     def setUp(self):
         self.game = BreachShift.__new__(BreachShift)
         game = self.game
-        game.win = MagicMock(spec=GraphicsWindow)
-        game.win.getProperties().getForeground.return_value = True
-        game.taskMgr = MagicMock()
+        self.window = MagicMock(spec=GraphicsWindow)
+        self.window.getProperties().getForeground.return_value = True
+        game.win = self.window
+        self.task_manager = MagicMock()
+        game.taskMgr = self.task_manager
         game.accept = MagicMock()
         game.clock = ClockObject()
         game.clock.setMode(ClockObject.M_non_real_time)
@@ -27,9 +29,10 @@ class TrainingIntegrationTests(unittest.TestCase):
         game.render = NodePath("test-render")
         game.player = game.render.attachNewNode("player")
         game.player.setPos(0, -2, 0)
-        game.camera = game.player.attachNewNode(Camera("camera"))
-        game.camera.setPos(0, 0, 1.7)
-        game.camNode = game.camera.node()
+        self.camera = game.player.attachNewNode(Camera("camera"))
+        self.camera.setPos(0, 0, 1.7)
+        game.camera = self.camera
+        game.camNode = self.camera.node()
         game.camera_pitch = 0.0
         game.mouse_ready = False
         game.floor = game.render.attachNewNode("floor")
@@ -43,16 +46,18 @@ class TrainingIntegrationTests(unittest.TestCase):
         game.create_hitmarker()
         game.weapon = Weapon()
         game.training_session = TrainingSession()
-        game.weapon_hud = MagicMock()
+        self.weapon_hud = MagicMock()
+        game.weapon_hud = self.weapon_hud
         game.target_hud = MagicMock()
-        game.training_hud = MagicMock()
+        self.training_hud = MagicMock()
+        game.training_hud = self.training_hud
 
     def tearDown(self):
         self.game.render.removeNode()
         self.game.aspect2d.removeNode()
 
     def hud_text(self):
-        return self.game.training_hud.setText.call_args.args[0]
+        return self.training_hud.setText.call_args.args[0]
 
     def test_accepted_shot_hits_only_the_nearest_target(self):
         game = self.game
@@ -121,7 +126,7 @@ class TrainingIntegrationTests(unittest.TestCase):
 
     def test_unfocused_or_unavailable_window_does_not_count(self):
         game = self.game
-        game.win.getProperties().getForeground.return_value = False
+        self.window.getProperties().getForeground.return_value = False
         game.shoot()
         game.win = None
         game.shoot()
@@ -145,7 +150,7 @@ class TrainingIntegrationTests(unittest.TestCase):
         game.shoot()
         game.reload_weapon()
         self.assertTrue(game.weapon.is_reloading)
-        game.taskMgr.doMethodLater.assert_any_call(
+        self.task_manager.doMethodLater.assert_any_call(
             game.weapon.reload_time, game.finish_weapon_reload, "reload-weapon"
         )
         game.clock.setFrameTime(11.0)
@@ -168,7 +173,7 @@ class TrainingIntegrationTests(unittest.TestCase):
         game = self.game
         shots = 0
         for target in game.targets.values():
-            game.camera.lookAt(target.root, Point3(1, 1, 1))
+            self.camera.lookAt(target.root, Point3(1, 1, 1))
             for _ in range(4):
                 game.clock.setFrameTime(10.0 + shots * 0.5)
                 game.shoot()
@@ -206,7 +211,7 @@ class TrainingIntegrationTests(unittest.TestCase):
         game.player.setPos(2, 3, 0)
         game.player.setH(45)
         game.camera_pitch = 30.0
-        game.camera.setP(30)
+        self.camera.setP(30)
         game.mouse_ready = True
         game.restart_training()
 
@@ -222,7 +227,7 @@ class TrainingIntegrationTests(unittest.TestCase):
         self.assertEqual(game.player.getPos(), Point3(0, -2, 0))
         self.assertEqual(game.player.getH(), 0)
         self.assertEqual(game.camera_pitch, 0)
-        self.assertEqual(game.camera.getP(), 0)
+        self.assertEqual(self.camera.getP(), 0)
         self.assertFalse(game.mouse_ready)
         self.assertTrue(game.hitmarker.isHidden())
         for target in game.targets.values():
@@ -230,9 +235,9 @@ class TrainingIntegrationTests(unittest.TestCase):
             self.assertFalse(target.root.isStashed())
             self.assertEqual(target.root.getPos(), target.start_position)
             self.assertEqual(target.move_direction, 1)
-            game.taskMgr.remove.assert_any_call(f"reset-color-{target.name}")
-        game.taskMgr.remove.assert_any_call("hide-hitmarker")
-        game.taskMgr.remove.assert_any_call("reload-weapon")
+            self.task_manager.remove.assert_any_call(f"reset-color-{target.name}")
+        self.task_manager.remove.assert_any_call("hide-hitmarker")
+        self.task_manager.remove.assert_any_call("reload-weapon")
 
     def test_restart_allows_another_completed_run(self):
         self.complete_training()
@@ -249,7 +254,7 @@ class TrainingIntegrationTests(unittest.TestCase):
             game.setup_training_hud()
         self.assertIs(onscreen_text.call_args.kwargs["parent"], game.a2dTopRight)
         self.assertEqual(onscreen_text.call_args.kwargs["pos"], (-0.05, -0.10))
-        game.taskMgr.add.assert_any_call(
+        self.task_manager.add.assert_any_call(
             game.update_training_hud, "update-training-hud", sort=15
         )
 
@@ -259,12 +264,12 @@ class TrainingIntegrationTests(unittest.TestCase):
             with self.subTest(ammo=ammo):
                 game.weapon.ammo = ammo
                 game.update_weapon_hud()
-                text = game.weapon_hud.setText.call_args.args[0]
+                text = self.weapon_hud.setText.call_args.args[0]
                 prompt = "R - Emergency Reload" if ammo < 5 else "R - Reload"
                 self.assertIn(prompt, text)
         game.weapon.reserve_ammo = 0
         game.update_weapon_hud()
-        self.assertNotIn("R -", game.weapon_hud.setText.call_args.args[0])
+        self.assertNotIn("R -", self.weapon_hud.setText.call_args.args[0])
 
 
 if __name__ == "__main__":
