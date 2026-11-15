@@ -1,0 +1,52 @@
+import unittest
+
+from panda3d.core import BitMask32, CollisionHandlerQueue, CollisionNode, CollisionSegment, CollisionTraverser, NodePath, Point3
+
+from campaign_world import CampaignWorld
+from level_data import load_levels
+from reality import Reality
+
+
+class CampaignWorldTests(unittest.TestCase):
+    def setUp(self):
+        self.render = NodePath("world-test-render")
+        self.world = CampaignWorld(self.render, NodePath("cube"), load_levels()[0])
+
+    def tearDown(self):
+        self.render.removeNode()
+
+    def crosses_first_gate(self):
+        ray = CollisionNode("test-ray")
+        ray.addSolid(CollisionSegment(Point3(0, 7, 1), Point3(0, 9, 1)))
+        ray.setFromCollideMask(BitMask32.bit(2))
+        ray.setIntoCollideMask(BitMask32.allOff())
+        node = self.render.attachNewNode(ray)
+        queue = CollisionHandlerQueue()
+        traverser = CollisionTraverser()
+        traverser.addCollider(node, queue)
+        traverser.traverse(self.render)
+        count = queue.getNumEntries()
+        node.removeNode()
+        return count
+
+    def test_real_collision_geometry_switches_with_the_visible_world(self):
+        self.assertGreater(self.crosses_first_gate(), 0)
+        self.world.apply(Reality.BREACH, False)
+        self.assertEqual(self.crosses_first_gate(), 0)
+        self.world.apply(Reality.NORMAL, False)
+        self.assertGreater(self.crosses_first_gate(), 0)
+
+    def test_shift_rejects_embedded_positions_but_allows_standing_on_cover(self):
+        self.assertFalse(self.world.destination_safe(Point3(0, 8, 0), Reality.NORMAL))
+        self.assertTrue(self.world.destination_safe(Point3(0, 8, 0), Reality.BREACH))
+        self.assertTrue(self.world.destination_safe(Point3(-4, 2, 1.5), Reality.NORMAL))
+
+    def test_core_requires_breach_and_stays_collected_after_switching(self):
+        self.assertTrue(self.world.core.isStashed())
+        self.world.apply(Reality.BREACH, False)
+        self.assertFalse(self.world.core.isStashed())
+        self.world.apply(Reality.BREACH, True)
+        self.assertTrue(self.world.core.isStashed())
+        self.world.apply(Reality.NORMAL, True)
+        self.world.apply(Reality.BREACH, True)
+        self.assertTrue(self.world.core.isStashed())

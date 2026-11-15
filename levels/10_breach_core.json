@@ -1,0 +1,14 @@
+{
+  "number": 10,
+  "name": "Breach Core",
+  "introduced": "warden",
+  "briefing": "The Warden can only be damaged in Breach. When it flashes red, jump to evade its stomp.",
+  "normal_gate_y": 8,
+  "breach_gate_y": 14.5,
+  "core": [-5, 11],
+  "exit": [0, 18],
+  "shared_blocks": [[-5, 2, 3, 1, 1.4], [5, 2, 3, 1, 1.4], [-6, 6, 1, 2, 3], [6, 6, 1, 2, 3], [0, 11, 2, 2, 1.5], [-5, 17, 2, 1, 1.4], [5, 17, 2, 1, 1.4]],
+  "normal_blocks": [[-5, 12.5, 1, 1, 3]],
+  "breach_blocks": [[5, 10, 1, 2, 3]],
+  "spawns": [["warden", 0, 5], ["howler", -7, 11], ["stalker", 7, 11], ["regenerator", -7, 17], ["armored", 7, 17]]
+}

@@ -1,0 +1,14 @@
+{
+  "number": 8,
+  "name": "Isolation Ward",
+  "introduced": "stalker",
+  "briefing": "Distant Stalkers hide in Normal reality. Breach reveals them, but also speeds up the whole pack.",
+  "normal_gate_y": 7.5,
+  "breach_gate_y": 14,
+  "core": [5, 11],
+  "exit": [0, 18],
+  "shared_blocks": [[-4, 2, 1, 6, 3], [4, 2, 1, 6, 3], [0, 10, 2, 3, 2], [-6, 12, 2, 2, 2], [4, 17, 3, 1, 1.5], [-5, 17, 2, 1, 2]],
+  "normal_blocks": [[-6, 5, 1, 2, 2]],
+  "breach_blocks": [[7, 9.5, 1, 1, 2]],
+  "spawns": [["stalker", 0, 5.5], ["stalker", -7, 2], ["howler", 7, 5], ["spitter", -2, 11], ["stalker", -7, 17]]
+}
