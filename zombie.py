@@ -123,7 +123,7 @@ class Zombie(Target):
                     self.restore_color()
             elif line_clear and distance <= self.spec.reach and now >= self.next_attack:
                 self.windup_until = now + 0.65
-            elif distance > self.spec.reach:
+            elif distance > self.spec.reach or not line_clear:
                 self._move(dt, now, player, grid)
             return actions
 
@@ -166,6 +166,6 @@ class Zombie(Target):
             elif vertical_gap < 1.4:
                 actions.append(ZombieAction("hit", self.spec.damage))
                 self.next_attack = now + self.spec.interval
-        if distance > (3.5 if self.kind is ZombieKind.SPITTER else self.spec.reach * 0.8):
+        if not line_clear or distance > (3.5 if self.kind is ZombieKind.SPITTER else self.spec.reach * 0.8):
             self._move(dt, now, player, grid)
         return actions

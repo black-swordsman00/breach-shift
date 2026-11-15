@@ -3,6 +3,7 @@ import unittest
 from panda3d.core import NodePath, Point3
 
 from navigation import NavigationGrid
+from level_data import Block
 from reality import Reality
 from zombie import Zombie
 from zombie_catalog import ZombieKind
@@ -113,3 +114,12 @@ class ZombieTests(unittest.TestCase):
         zombie.update_ai(0.1, 1.7, Point3(0, 4, 0), Reality.NORMAL, self.grid, True)
         self.assertGreater(zombie.root.getY(), 0)
         self.assertEqual(zombie.root.getZ(), 0)
+
+    def test_ranged_enemies_keep_routing_when_cover_blocks_a_nearby_player(self):
+        grid = NavigationGrid((Block(0, 1, 1, 0.4, 2),), Reality.NORMAL)
+        for kind in (ZombieKind.SPITTER, ZombieKind.WARDEN):
+            with self.subTest(kind=kind):
+                zombie = self.make(kind)
+                actions = zombie.update_ai(0.1, 1, Point3(0, 2.5, 0), Reality.NORMAL, grid, False)
+                self.assertFalse(actions)
+                self.assertGreater(zombie.root.getPos().lengthSquared(), 0)
