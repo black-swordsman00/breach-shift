@@ -2,13 +2,15 @@
   "number": 9,
   "name": "Bio-Recovery Wing",
   "introduced": "regenerator",
+  "bounds": [-42, 42, -15, 109],
+  "player_spawn": [0, -10],
   "briefing": "Regenerators recover after avoiding damage in Normal reality. Breach interrupts their healing.",
-  "normal_gate_y": 7.5,
-  "breach_gate_y": 14,
-  "core": [0, 11],
-  "exit": [0, 18],
-  "shared_blocks": [[-5, 2, 2, 2, 2], [5, 2, 2, 2, 2], [0, 5, 3, 1, 1.3], [-3, 10, 1, 3, 2.5], [3, 10, 1, 3, 2.5], [-5, 16, 2, 2, 2], [5, 16, 2, 2, 2]],
-  "normal_blocks": [[-7, 11, 1, 3, 3]],
-  "breach_blocks": [[7, 11, 1, 3, 3]],
-  "spawns": [["regenerator", 0, 3], ["regenerator", 0, 11], ["armored", -7, 5], ["spitter", 7, 5], ["stalker", 0, 17]]
+  "normal_gate_y": 45,
+  "breach_gate_y": 80,
+  "core": [0, 64],
+  "exit": [0, 102],
+  "shared_blocks": [[-21, 20, 8, 10, 2], [21, 20, 8, 10, 2], [0, 35, 13, 4, 1.3], [-13, 59, 4, 15, 2.5], [13, 59, 4, 15, 2.5], [-21, 89, 8, 10, 2], [21, 89, 8, 10, 2], [-32, -2, 8, 4, 2], [32, 3, 8, 4, 2], [0, 91, 8, 4, 1.3], [-33, 70, 6, 4, 2], [33, 72, 6, 4, 2]],
+  "normal_blocks": [[-30, 64, 4, 15, 3]],
+  "breach_blocks": [[30, 64, 4, 15, 3]],
+  "spawns": [["regenerator", 0, 20], ["regenerator", 0, 64], ["armored", -30, 35], ["spitter", 30, 35], ["stalker", 0, 97], ["runner", -31, 99], ["spitter", 31, 99], ["regenerator", -30, 11]]
 }

@@ -12,8 +12,19 @@ class CampaignWorld:
         self.level = level
         self.root = parent.attachNewNode(f"level-{level.number}")
         self.blocks: list[tuple[Block, NodePath]] = []
-        self.grids = {reality: NavigationGrid(level.blocks, reality) for reality in Reality}
-        for block in level.blocks:
+        cell_size = 1.0 if max(level.bounds.width, level.bounds.depth) > 50 else 0.5
+        self.grids = {reality: NavigationGrid(level.blocks, reality, level.bounds, cell_size)
+                      for reality in Reality}
+        bounds = level.bounds
+        center_x = (bounds.min_x + bounds.max_x) / 2
+        center_y = (bounds.min_y + bounds.max_y) / 2
+        perimeter = (
+            Block(bounds.min_x - 0.3, center_y, 0.6, bounds.depth + 1.2, 4.5),
+            Block(bounds.max_x + 0.3, center_y, 0.6, bounds.depth + 1.2, 4.5),
+            Block(center_x, bounds.min_y - 0.3, bounds.width, 0.6, 4.5),
+            Block(center_x, bounds.max_y + 0.3, bounds.width, 0.6, 4.5),
+        )
+        for block in (*level.blocks, *perimeter):
             node = self.root.attachNewNode("level-block")
             node.setPos(block.x, block.y, 0)
             model = cube.copyTo(node)
@@ -58,8 +69,9 @@ class CampaignWorld:
         self.set_exit_ready(False)
 
     def destination_safe(self, position: Point3, reality: Reality) -> bool:
-        return not any(block.active(reality) and block.blocks_player(position.x, position.y, position.z)
-                       for block, _ in self.blocks)
+        return (self.level.bounds.contains(position.x, position.y, margin=0.4)
+                and not any(block.active(reality) and block.blocks_player(position.x, position.y, position.z)
+                            for block, _ in self.blocks))
 
     def apply(self, reality: Reality, core_collected: bool) -> None:
         for block, node in self.blocks:

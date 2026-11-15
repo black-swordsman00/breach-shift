@@ -1,9 +1,11 @@
+from dataclasses import replace
 import unittest
 from unittest.mock import MagicMock, patch
 
-from panda3d.core import Camera, ClockObject, GraphicsWindow, NodePath, Point3
+from panda3d.core import Camera, ClockObject, GraphicsWindow, KeyboardButton, NodePath, Point3
 
 from campaign_game import CampaignGame
+from level_data import MapBounds
 from reality import Reality
 from training_session import TrainingSession
 from weapon import Weapon
@@ -56,6 +58,10 @@ class CampaignIntegrationTests(unittest.TestCase):
         game.training_hud = MagicMock()
         with patch("campaign_game.OnscreenText"):
             game.setup_campaign()
+        self.campaign_hud = MagicMock()
+        game.campaign_hud = self.campaign_hud
+        self.level = game.levels[0]
+        self.initial_enemies = game.enemies_remaining
 
     def tearDown(self):
         self.game.render.removeNode()
@@ -88,12 +94,13 @@ class CampaignIntegrationTests(unittest.TestCase):
         game = self.game
         game.shift_reality()
         self.tick(3)
-        game.player.setPos(0, 8, 0)
+        gate = self.level.blocks[0]
+        game.player.setPos(gate.x, gate.y, 0)
         game.release_shift()
         game.shift_reality()
         self.assertIs(game.reality.state, Reality.BREACH)
         self.assertEqual(game.reality.remaining(game.clock.getFrameTime()), 0)
-        game.player.setY(10)
+        game.player.setY(gate.y + 2)
         game.release_shift()
         game.shift_reality()
         self.assertIs(game.reality.state, Reality.NORMAL)
@@ -101,7 +108,7 @@ class CampaignIntegrationTests(unittest.TestCase):
     def test_accepted_shots_damage_independent_zombies_and_destroy_their_colliders(self):
         game = self.game
         zombie, other = tuple(game.zombies.values())[:2]
-        game.player.setPos(-7, 0, 0)
+        game.player.setPos(zombie.root.getX(), zombie.root.getY() - 3, 0)
         self.camera.lookAt(zombie.root, Point3(0, 0, 1))
         game.shoot()
         self.assertEqual(zombie.health, 50)
@@ -115,13 +122,13 @@ class CampaignIntegrationTests(unittest.TestCase):
             game.shoot()
         self.assertEqual(zombie.health, 0)
         self.assertTrue(zombie.root.isStashed())
-        self.assertEqual(game.enemies_remaining, 1)
+        self.assertEqual(game.enemies_remaining, self.initial_enemies - 1)
         self.assertTrue(game.hitmarker.isHidden() is False)
 
     def test_melee_damage_death_input_lock_and_retry(self):
         game = self.game
         zombie = next(iter(game.zombies.values()))
-        zombie.root.setPos(0, -1.2, 0)
+        zombie.root.setPos(game.player.getX(), game.player.getY() + 0.8, 0)
         self.tick(1)
         game.update_targets(None)
         self.assertEqual(game.player_health.current, 88)
@@ -137,9 +144,9 @@ class CampaignIntegrationTests(unittest.TestCase):
         self.assertIs(game.reality.state, Reality.NORMAL)
         game.restart_training()
         self.assertEqual(game.player_health.current, 100)
-        self.assertEqual(game.player.getPos(), Point3(0, -2, 0))
+        self.assertEqual(game.player.getPos(), Point3(*self.level.player_spawn, 0))
         self.assertEqual(game.weapon.ammo, 12)
-        self.assertEqual(game.enemies_remaining, 2)
+        self.assertEqual(game.enemies_remaining, self.initial_enemies)
 
     def test_core_reward_is_once_and_every_map_can_advance_through_real_interactions(self):
         game = self.game
@@ -169,11 +176,13 @@ class CampaignIntegrationTests(unittest.TestCase):
 
     def test_projectiles_hit_player_and_are_blocked_by_geometry(self):
         game = self.game
-        game.spawn_projectile(Point3(0, 0, 0.9), Point3(0, -2, 0.9), 10)
+        x, y = self.level.player_spawn
+        game.spawn_projectile(Point3(x, y + 2, 0.9), Point3(x, y, 0.9), 10)
         game.update_projectiles(0.3)
         self.assertEqual(game.player_health.current, 90)
         self.assertFalse(game.projectiles)
-        game.spawn_projectile(Point3(0, 9, 0.9), Point3(0, -2, 0.9), 10)
+        gate = self.level.blocks[0]
+        game.spawn_projectile(Point3(gate.x, gate.y + 1, 0.9), Point3(gate.x, gate.y - 3, 0.9), 10)
         game.update_projectiles(0.5)
         self.assertEqual(game.player_health.current, 90)
         self.assertFalse(game.projectiles)
@@ -181,25 +190,27 @@ class CampaignIntegrationTests(unittest.TestCase):
     def test_zombies_cannot_attack_through_a_reality_barrier(self):
         game = self.game
         zombie = next(iter(game.zombies.values()))
-        zombie.root.setPos(0, 8.5, 0)
-        game.player.setPos(0, 7.5, 0)
+        gate = self.level.blocks[0]
+        zombie.root.setPos(gate.x, gate.y + 0.5, 0)
+        game.player.setPos(gate.x, gate.y - 0.5, 0)
         self.tick(1)
         game.update_targets(None)
         self.assertEqual(game.player_health.current, 100)
 
     def test_howler_summons_are_registered_for_bullets_and_exit_conditions(self):
         game = self.game
-        howler = game.spawn_zombie(ZombieKind.HOWLER, 0, 4)
+        howler = game.spawn_zombie(ZombieKind.HOWLER, game.player.getX(), game.player.getY() + 6)
         howler.next_summon = 0
         game.update_targets(None)
-        self.assertEqual(game.enemies_remaining, 4)
-        self.assertEqual(len(game.targets), 4)
+        self.assertEqual(game.enemies_remaining, self.initial_enemies + 2)
+        self.assertEqual(len(game.targets), self.initial_enemies + 2)
 
     def test_shift_relocates_embedded_zombies_without_restoring_their_health(self):
         game = self.game
         game.shift_reality()
         zombie = next(iter(game.zombies.values()))
-        zombie.root.setPos(0, 8, 0)
+        gate = self.level.blocks[0]
+        zombie.root.setPos(gate.x, gate.y, 0)
         zombie.take_damage(25)
         self.tick(3)
         game.release_shift()
@@ -209,3 +220,65 @@ class CampaignIntegrationTests(unittest.TestCase):
         assert world is not None
         self.assertTrue(world.grids[Reality.NORMAL].is_free(zombie.root.getX(), zombie.root.getY()))
         self.assertEqual(zombie.health, 50)
+
+    def test_loading_a_large_map_updates_floor_boundaries_grounding_and_retry(self):
+        game = self.game
+        level = replace(game.levels[0], bounds=MapBounds(-30, 30, -15, 75), player_spawn=(20, -10))
+        game.levels = (level, *game.levels[1:])
+        game.load_level()
+        self.assertEqual(game.player.getPos(), Point3(20, -10, 0))
+        self.assertAlmostEqual(game.floor.getX(), -30)
+        self.assertAlmostEqual(game.floor.getY(), -15)
+        self.assertAlmostEqual(game.floor.getSx(), 60)
+        self.assertAlmostEqual(game.floor.getSy(), 90)
+        game.update_collisions(None)
+        self.assertEqual(game.player.getPos(), Point3(20, -10, 0))
+        game.jump_player()
+        for _ in range(40):
+            game.update_movement(None)
+            game.update_collisions(None)
+        self.assertTrue(game.jump_state.is_grounded)
+        self.assertAlmostEqual(game.player.getZ(), 0)
+        game.player.setPos(29.9, -10, 0)
+        game.update_collisions(None)
+        self.assertLessEqual(game.player.getX(), 29.61)
+        game.restart_training()
+        self.assertEqual(game.player.getPos(), Point3(20, -10, 0))
+
+    def test_campaign_pace_is_consistent_across_frame_rates_and_diagonal_input(self):
+        game = self.game
+        keyboard = MagicMock()
+        game.mouseWatcherNode = keyboard
+        for frame_rate in (20, 30, 60, 144):
+            for diagonal in (False, True):
+                with self.subTest(frame_rate=frame_rate, diagonal=diagonal):
+                    game.player.setPos(*self.level.player_spawn, 0)
+                    game.player.setH(0)
+                    game.jump_state.reset()
+                    start = game.player.getPos()
+                    keyboard.isButtonDown.side_effect = lambda button: (
+                        button == KeyboardButton.asciiKey("w")
+                        or (diagonal and button == KeyboardButton.asciiKey("d")))
+                    game.clock.setDt(1 / frame_rate)
+                    for _ in range(frame_rate):
+                        game.update_movement(None)
+                        game.update_collisions(None)
+                    distance = (game.player.getPos() - start).length()
+                    self.assertAlmostEqual(distance, 6.5, places=4)
+
+    def test_objective_guidance_tracks_player_direction_and_nearby_interactions(self):
+        game = self.game
+        game.player.setPos(0, 0, 0)
+        game.player.setH(0)
+        self.assertEqual(game.navigation_hint((0, 10)), "10m ahead")
+        self.assertEqual(game.navigation_hint((10, 0)), "10m right")
+        self.assertEqual(game.navigation_hint((-10, 0)), "10m left")
+        self.assertEqual(game.navigation_hint((0, -10)), "10m behind")
+        game.player.setH(180)
+        self.assertEqual(game.navigation_hint((0, 10)), "10m behind")
+        self.assertEqual(game.navigation_hint((0, 1)), "Nearby")
+        game.update_campaign_hud()
+        self.assertIn("Core: Breach |", self.campaign_hud.setText.call_args.args[0])
+        game.progress.collect_core()
+        game.update_campaign_hud()
+        self.assertIn("Core: Recovered", self.campaign_hud.setText.call_args.args[0])
