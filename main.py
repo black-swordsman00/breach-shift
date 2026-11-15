@@ -1,4 +1,5 @@
 from target import Target
+from player_jump import PlayerJump
 from training_session import TrainingSession
 from weapon import Weapon
 from direct.gui.OnscreenText import OnscreenText
@@ -64,6 +65,7 @@ class BreachShift(ShowBase):
         #Movement
         self.move_speed = 5.0
         self.clock = ClockObject.getGlobalClock()
+        self.setup_jumping()
         self.taskMgr.add(self.update_movement, "update-movement")
         self.taskMgr.add(
             self.update_targets,
@@ -123,6 +125,7 @@ class BreachShift(ShowBase):
         #Training session statistics
         self.training_session = TrainingSession()
         self.setup_training_hud()
+        self.setup_movement_hud()
 
 
     def load_single_model(self, path: str) -> NodePath:
@@ -227,6 +230,15 @@ class BreachShift(ShowBase):
         return Task.done
 
     def update_movement(self, task):
+        dt = min(self.clock.getDt(), 0.05)
+        self.previous_player_z = self.player.getZ()
+        self.player.setZ(self.previous_player_z + self.jump_state.update(dt))
+
+        window = self.win
+        if (window is None or not isinstance(window, GraphicsWindow)
+                or not window.getProperties().getForeground()):
+            self.jump_held = False
+
         keyboard = self.mouseWatcherNode
 
         if keyboard is None:
@@ -248,11 +260,31 @@ class BreachShift(ShowBase):
         if direction.lengthSquared() > 0:
             direction.normalize()
 
-            dt = min(self.clock.getDt(), 0.05)
             movement = direction * self.move_speed * dt
 
             self.player.setPos(self.player, movement)
         return Task.cont
+
+    def setup_jumping(self):
+        self.jump_state = PlayerJump(max_jumps=2)
+        self.jump_held = False
+        self.previous_player_z = self.player.getZ()
+        self.accept("space", self.jump_player)
+        self.accept("space-up", self.release_jump)
+
+    def jump_player(self):
+        window = self.win
+        if (window is None or not isinstance(window, GraphicsWindow)
+                or not window.getProperties().getForeground()):
+            return
+        if self.jump_held:
+            return
+
+        self.jump_held = True
+        self.jump_state.try_jump()
+
+    def release_jump(self):
+        self.jump_held = False
 
     def update_mouse_look(self, task):
         window = self.win
@@ -339,6 +371,7 @@ class BreachShift(ShowBase):
             boundaries_node
         )
 
+        self.setup_grounding()
         self.taskMgr.add(
             self.update_collisions,
             "update-collisions",
@@ -347,7 +380,56 @@ class BreachShift(ShowBase):
 
     def update_collisions(self, task):
         self.collision_traverser.traverse(self.render)
+        self.update_grounding()
         return Task.cont
+
+    def setup_grounding(self):
+        ground_mask = BitMask32.bit(3)
+        for target in self.targets.values():
+            node = target.collider.node()
+            node.setIntoCollideMask(node.getIntoCollideMask() | ground_mask)
+
+        floor_node = CollisionNode("ground-floor")
+        floor_node.addSolid(CollisionPlane(Plane(Vec3(0, 0, 1), Point3(0, 0, 0))))
+        floor_node.setFromCollideMask(BitMask32.allOff())
+        floor_node.setIntoCollideMask(ground_mask)
+        self.ground_floor = self.render.attachNewNode(floor_node)
+
+        self.ground_ray = CollisionRay(0, 0, 0.05, 0, 0, -1)
+        ray_node = CollisionNode("ground-ray")
+        ray_node.addSolid(self.ground_ray)
+        ray_node.setFromCollideMask(ground_mask)
+        ray_node.setIntoCollideMask(BitMask32.allOff())
+        self.ground_ray_path = self.player.attachNewNode(ray_node)
+        self.ground_queue = CollisionHandlerQueue()
+        self.ground_traverser = CollisionTraverser("grounding")
+        self.ground_traverser.addCollider(self.ground_ray_path, self.ground_queue)
+
+    def update_grounding(self):
+        if self.jump_state.vertical_speed > 0:
+            return
+
+        current_z = self.player.getZ()
+        # Start above the previous feet position so falls cannot skip a surface.
+        self.ground_ray.setOrigin(
+            0, 0, max(0.0, self.previous_player_z - current_z) + 0.05
+        )
+        self.ground_queue.clearEntries()
+        self.ground_traverser.traverse(self.render)
+        self.ground_queue.sortEntries()
+
+        for index in range(self.ground_queue.getNumEntries()):
+            entry = self.ground_queue.getEntry(index)
+            if entry.getSurfaceNormal(self.render).z < 0.5:
+                continue
+            surface_z = entry.getSurfacePoint(self.render).z
+            if (current_z <= surface_z + 0.001
+                    and surface_z <= self.previous_player_z + 0.001):
+                self.player.setZ(surface_z)
+                self.jump_state.land()
+                return
+
+        self.jump_state.leave_ground()
 
     def reset_target_color(self, target: Target, task):
         target.restore_color()
@@ -594,6 +676,17 @@ class BreachShift(ShowBase):
         )
         return Task.cont
 
+    def setup_movement_hud(self):
+        self.movement_hud = OnscreenText(
+            text="Space - Jump | Space again - Double Jump",
+            parent=self.a2dBottomLeft,
+            pos=(0.05, 0.10),
+            scale=0.04,
+            fg=(1, 1, 1, 1),
+            shadow=(0, 0, 0, 1),
+            align=TextNode.ALeft
+        )
+
     def restart_training(self):
         self.taskMgr.remove("hide-hitmarker")
         self.hitmarker.hide()
@@ -605,6 +698,9 @@ class BreachShift(ShowBase):
         #Reset the player before restoring the target.
         self.player.setPos(0, -2, 0)
         self.player.setH(0)
+        self.jump_state.reset()
+        self.jump_held = False
+        self.previous_player_z = self.player.getZ()
 
         self.camera_pitch = 0.0
         camera = self.camera

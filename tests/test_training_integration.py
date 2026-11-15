@@ -29,6 +29,7 @@ class TrainingIntegrationTests(unittest.TestCase):
         game.render = NodePath("test-render")
         game.player = game.render.attachNewNode("player")
         game.player.setPos(0, -2, 0)
+        game.setup_jumping()
         self.camera = game.player.attachNewNode(Camera("camera"))
         self.camera.setPos(0, 0, 1.7)
         game.camera = self.camera
