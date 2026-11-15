@@ -200,6 +200,141 @@ class JumpIntegrationTests(unittest.TestCase):
         game.jump_player()
         self.assertFalse(game.jump_state.is_grounded)
 
+    def test_double_jump_requires_release_and_a_third_press_is_rejected(self):
+        game = self.game
+        game.jump_player()
+        self.step(3)
+        speed = game.jump_state.vertical_speed
+        game.jump_player()
+        self.assertEqual(game.jump_state.jumps_used, 1)
+        self.assertEqual(game.jump_state.vertical_speed, speed)
+        game.release_jump()
+        game.jump_player()
+        self.assertEqual(game.jump_state.jumps_used, 2)
+        self.assertEqual(game.jump_state.vertical_speed, game.jump_state.jump_speed)
+        self.step()
+        speed = game.jump_state.vertical_speed
+        game.release_jump()
+        game.jump_player()
+        self.assertEqual(game.jump_state.jumps_used, 2)
+        self.assertEqual(game.jump_state.vertical_speed, speed)
+        self.land_on_floor()
+
+    def test_second_jump_reverses_a_fall_in_the_arena(self):
+        game = self.game
+        game.jump_player()
+        self.step(9)
+        self.assertLess(game.jump_state.vertical_speed, 0.0)
+        height = game.player.getZ()
+        game.release_jump()
+        game.jump_player()
+        self.step()
+        self.assertGreater(game.player.getZ(), height)
+        self.assertGreater(game.jump_state.vertical_speed, 0.0)
+
+    def test_floor_landing_restores_the_double_jump(self):
+        game = self.game
+        game.jump_player()
+        self.step(4)
+        game.release_jump()
+        game.jump_player()
+        self.land_on_floor()
+        self.assertEqual(game.jump_state.jumps_used, 0)
+        game.release_jump()
+        game.jump_player()
+        game.release_jump()
+        game.jump_player()
+        self.assertEqual(game.jump_state.jumps_used, 2)
+
+    def test_target_top_landing_restores_both_jumps(self):
+        game = self.game
+        game.player.setPos(0, 6, 2.0)
+        self.step()
+        game.jump_player()
+        self.step(2)
+        game.release_jump()
+        game.jump_player()
+        self.assertEqual(game.jump_state.jumps_used, 2)
+        self.step(60)
+        self.assertTrue(game.jump_state.is_grounded)
+        self.assertAlmostEqual(game.player.getZ(), 2.0)
+        self.assertEqual(game.jump_state.jumps_used, 0)
+
+    def test_walking_off_a_target_allows_only_one_airborne_boost(self):
+        game = self.game
+        game.player.setPos(0, 6, 2.0)
+        self.step()
+        game.player.setX(4.0)
+        self.step()
+        self.assertEqual(game.jump_state.jumps_used, 1)
+        game.jump_player()
+        self.assertEqual(game.jump_state.jumps_used, 2)
+        game.release_jump()
+        self.step()
+        speed = game.jump_state.vertical_speed
+        game.jump_player()
+        self.assertEqual(game.jump_state.vertical_speed, speed)
+
+    def test_target_side_collision_cannot_replenish_airborne_jumps(self):
+        game = self.game
+        game.jump_player()
+        game.release_jump()
+        game.jump_player()
+        game.player.setPos(-1.1, 6, 0.8)
+        game.jump_state.vertical_speed = -1.0
+        self.step()
+        self.assertLessEqual(game.player.getX(), -1.39)
+        self.assertFalse(game.jump_state.is_grounded)
+        self.assertEqual(game.jump_state.jumps_used, 2)
+        game.release_jump()
+        speed = game.jump_state.vertical_speed
+        game.jump_player()
+        self.assertEqual(game.jump_state.vertical_speed, speed)
+
+    def test_restart_replenishes_both_jumps_while_airborne(self):
+        game = self.game
+        game.jump_player()
+        game.release_jump()
+        game.jump_player()
+        self.step()
+        game.restart_training()
+        self.assertEqual(game.jump_state.jumps_used, 0)
+        self.assertTrue(game.jump_state.is_grounded)
+        self.assertFalse(game.jump_held)
+        game.jump_player()
+        game.release_jump()
+        game.jump_player()
+        self.assertEqual(game.jump_state.jumps_used, 2)
+
+    def test_double_jump_during_reload_preserves_ammunition_and_statistics(self):
+        game = self.game
+        game.shoot()
+        game.reload_weapon()
+        game.jump_player()
+        self.step(2)
+        game.release_jump()
+        game.jump_player()
+        self.assertEqual(game.jump_state.jumps_used, 2)
+        self.assertTrue(game.weapon.is_reloading)
+        self.assertEqual(game.weapon.ammo, 11)
+        self.assertEqual(game.training_session.shots, 1)
+        self.assertEqual(game.training_session.hits, 1)
+
+    def test_shooting_during_a_double_jump_keeps_target_damage_and_hitmarker(self):
+        game = self.game
+        game.jump_player()
+        self.step(2)
+        game.release_jump()
+        game.jump_player()
+        self.step()
+        self.camera.lookAt(game.targets["target-1"].root, Point3(1, 1, 1))
+        game.shoot()
+        self.assertEqual(game.jump_state.jumps_used, 2)
+        self.assertEqual(game.training_session.shots, 1)
+        self.assertEqual(game.training_session.hits, 1)
+        self.assertEqual(game.targets["target-1"].health, 75)
+        self.assertFalse(game.hitmarker.isHidden())
+
 
 if __name__ == "__main__":
     unittest.main()

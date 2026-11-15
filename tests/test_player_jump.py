@@ -75,6 +75,70 @@ class PlayerJumpTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     PlayerJump(jump_speed=speed, gravity=gravity)
 
+    def test_double_jump_restores_upward_speed_and_rejects_a_third_jump(self):
+        jump = PlayerJump(max_jumps=2)
+        self.assertTrue(jump.try_jump())
+        jump.update(0.2)
+        self.assertTrue(jump.try_jump())
+        self.assertEqual(jump.vertical_speed, jump.jump_speed)
+        self.assertEqual(jump.jumps_used, 2)
+        jump.update(0.1)
+        speed = jump.vertical_speed
+        self.assertFalse(jump.try_jump())
+        self.assertEqual(jump.vertical_speed, speed)
+
+    def test_double_jump_can_reverse_a_fall(self):
+        jump = PlayerJump(max_jumps=2)
+        jump.try_jump()
+        jump.update(0.5)
+        self.assertLess(jump.vertical_speed, 0.0)
+        self.assertTrue(jump.try_jump())
+        self.assertGreater(jump.update(0.05), 0.0)
+
+    def test_landing_replenishes_both_jumps(self):
+        jump = PlayerJump(max_jumps=2)
+        for _ in range(2):
+            self.assertTrue(jump.try_jump())
+            self.assertTrue(jump.try_jump())
+            self.assertFalse(jump.try_jump())
+            jump.land()
+            self.assertEqual(jump.jumps_used, 0)
+            self.assertTrue(jump.is_grounded)
+
+    def test_reset_restores_both_jumps_during_a_double_jump(self):
+        jump = PlayerJump(max_jumps=2)
+        jump.try_jump()
+        jump.try_jump()
+        jump.update(0.1)
+        jump.reset()
+        self.assertEqual(jump.jumps_used, 0)
+        self.assertTrue(jump.try_jump())
+        self.assertTrue(jump.try_jump())
+
+    def test_walking_off_a_ledge_leaves_one_airborne_jump(self):
+        jump = PlayerJump(max_jumps=2)
+        jump.leave_ground()
+        self.assertEqual(jump.jumps_used, 1)
+        self.assertTrue(jump.try_jump())
+        self.assertFalse(jump.try_jump())
+
+    def test_airborne_ground_check_does_not_restore_used_jumps(self):
+        jump = PlayerJump(max_jumps=2)
+        jump.try_jump()
+        jump.try_jump()
+        jump.update(0.1)
+        speed = jump.vertical_speed
+        jump.leave_ground()
+        self.assertEqual(jump.jumps_used, 2)
+        self.assertEqual(jump.vertical_speed, speed)
+        self.assertFalse(jump.try_jump())
+
+    def test_nonpositive_jump_limit_is_rejected(self):
+        for limit in (0, -1):
+            with self.subTest(limit=limit):
+                with self.assertRaises(ValueError):
+                    PlayerJump(max_jumps=limit)
+
 
 if __name__ == "__main__":
     unittest.main()

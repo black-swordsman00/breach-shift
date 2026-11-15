@@ -266,7 +266,7 @@ class BreachShift(ShowBase):
         return Task.cont
 
     def setup_jumping(self):
-        self.jump_state = PlayerJump()
+        self.jump_state = PlayerJump(max_jumps=2)
         self.jump_held = False
         self.previous_player_z = self.player.getZ()
         self.accept("space", self.jump_player)
@@ -678,7 +678,7 @@ class BreachShift(ShowBase):
 
     def setup_movement_hud(self):
         self.movement_hud = OnscreenText(
-            text="Space - Jump",
+            text="Space - Jump | Space again - Double Jump",
             parent=self.a2dBottomLeft,
             pos=(0.05, 0.10),
             scale=0.04,
