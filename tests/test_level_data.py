@@ -40,6 +40,20 @@ class LevelDataTests(unittest.TestCase):
             with self.subTest(values=values), self.assertRaises(ValueError):
                 MapBounds(*values)
 
+    def test_all_ten_maps_are_large_with_geometry_inside_their_floors(self):
+        levels = load_levels()
+        self.assertEqual(len(levels), 10)
+        for level in levels:
+            with self.subTest(level=level.name):
+                self.assertGreaterEqual(level.bounds.width, 60)
+                self.assertGreaterEqual(level.bounds.depth, 90)
+                self.assertGreaterEqual(level.exit[1] - level.player_spawn[1], 70)
+                for block in level.blocks:
+                    self.assertTrue(level.bounds.contains(block.x - block.width / 2,
+                                                          block.y - block.depth / 2))
+                    self.assertTrue(level.bounds.contains(block.x + block.width / 2,
+                                                          block.y + block.depth / 2))
+
     def test_spawns_and_objectives_cannot_be_outside_the_floor(self):
         for key in ("player_spawn", "core", "exit"):
             with self.subTest(key=key):
