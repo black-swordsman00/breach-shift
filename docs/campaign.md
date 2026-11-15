@@ -8,6 +8,12 @@ Shift has a two-second cooldown and rejects destinations occupied by solid
 geometry. Switching preserves health, ammunition, and enemy damage. Enemies
 move faster in Breach; use its shortcuts carefully.
 
+Timed reinforcements start after 30 active seconds. Waves grow with time and
+their interval decreases to a floor of eight seconds, with at most 32 living
+zombies. Only introduced enemy types can reinforce a map, and the Warden is
+not duplicated by timed waves. Core recovery seals further timed waves; existing
+Howlers retain their finite summon budget. See [combat balance](./combat.md).
+
 Campaign movement runs at 6.5 units per second, with equal forward and diagonal
 speed. The HUD gives straight-line distance and a player-relative direction to
 the core and exit; obstacles may require a longer route.

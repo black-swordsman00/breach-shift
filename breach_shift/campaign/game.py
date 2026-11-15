@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+from math import hypot
+from random import Random
 
 from direct.gui.OnscreenText import OnscreenText
 from direct.task import Task
@@ -7,6 +9,14 @@ from panda3d.core import (BitMask32, CollisionHandlerQueue, CollisionNode, Colli
                          NodePath, Plane, Point3, TextNode, Vec3)
 
 from breach_shift.campaign.state import CampaignProgress
+from breach_shift.campaign.director import WaveDirector
+from breach_shift.art.primitives import part, sphere
+from breach_shift.art.weapons import WeaponView
+from breach_shift.combat.arsenal import Arsenal
+from breach_shift.combat.catalog import WEAPON_ORDER, WeaponKind
+from breach_shift.combat.loot import roll_ammo
+from breach_shift.world.pickups import AmmoPickup
+from breach_shift.world.environment import apply_atmosphere
 from breach_shift.world.scene import CampaignWorld
 from breach_shift.world.levels import load_levels
 from breach_shift.core.game import BreachShift
@@ -14,7 +24,7 @@ from breach_shift.player.health import PlayerHealth
 from breach_shift.world.reality import Reality, RealityShift
 from breach_shift.combat.target import Target
 from breach_shift.enemies.zombie import Zombie
-from breach_shift.enemies.catalog import ZombieKind
+from breach_shift.enemies.catalog import ZOMBIE_ORDER, ZombieKind
 
 
 @dataclass
@@ -28,9 +38,9 @@ class SpitProjectile:
 class CampaignGame(BreachShift):
     """Run the zombie campaign on top of the shared first-person game systems."""
 
-    def __init__(self):
+    def __init__(self, *, headless: bool = False):
         self.campaign_ready = False
-        super().__init__()
+        super().__init__(headless=headless)
         lens = self.camLens
         if lens is None:
             raise RuntimeError("The campaign requires a camera lens.")
@@ -46,6 +56,15 @@ class CampaignGame(BreachShift):
         self.zombies: dict[str, Zombie] = {}
         self.world: CampaignWorld | None = None
         self.projectiles: list[SpitProjectile] = []
+        self.pickups: list[AmmoPickup] = []
+        self.random = Random()
+        self.arsenal = Arsenal()
+        self.weapon = self.arsenal.active
+        self.weapon_view = WeaponView(self.camera, self.arsenal.selected)
+        self.director = WaveDirector()
+        self.trigger_held = False
+        self.last_encounter_time = self.clock.getFrameTime()
+        self.previous_view_position = Point3(self.player.getPos())
         self.shift_held = False
         self.next_zombie_id = 0
         self.notice = ""
@@ -69,7 +88,7 @@ class CampaignGame(BreachShift):
         if notice_node is not None:
             notice_node.setWordwrap(65)
         self.campaign_controls = OnscreenText(
-            text="Shift - Change Reality | E - Interact | T - Retry",
+            text="1 Pistol | 2 SMG | 3 Rifle | 4 Shotgun\nShift - Change Reality | E - Interact | T - Retry",
             parent=self.a2dBottomLeft, pos=(0.05, 0.2), scale=0.035,
             fg=(1, 1, 1, 1), shadow=(0, 0, 0, 1), align=TextNode.ALeft)
 
@@ -86,6 +105,10 @@ class CampaignGame(BreachShift):
         self.accept("shift", self.shift_reality)
         self.accept("shift-up", self.release_shift)
         self.accept("e", self.interact)
+        self.accept("mouse1-up", self.release_trigger)
+        self.accept("shift-mouse1-up", self.release_trigger)
+        for index, kind in enumerate(WEAPON_ORDER, start=1):
+            self.accept(str(index), self.select_weapon, [kind])
         for event, callback in (("shift-mouse1", self.shoot), ("shift-r", self.reload_weapon),
                                 ("shift-space", self.jump_player), ("shift-space-up", self.release_jump),
                                 ("shift-e", self.interact), ("shift-t", self.restart_training)):
@@ -101,11 +124,19 @@ class CampaignGame(BreachShift):
     def can_act(self) -> bool:
         window = self.win
         return (self.player_health.is_alive and not self.progress.complete
-                and window is not None and isinstance(window, GraphicsWindow)
-                and window.getProperties().getForeground())
+                and (getattr(self, "headless", False)
+                     or (window is not None and isinstance(window, GraphicsWindow)
+                         and window.getProperties().getForeground())))
 
     def load_level(self):
         self.clear_projectiles()
+        self.clear_pickups()
+        self.arsenal.reset()
+        self.weapon = self.arsenal.active
+        self.weapon_view.equip(self.arsenal.selected)
+        self.director = WaveDirector()
+        self.trigger_held = False
+        self.last_encounter_time = self.clock.getFrameTime()
         for target in self.targets.values():
             self.taskMgr.remove(f"reset-color-{target.name}")
             target.root.removeNode()
@@ -124,6 +155,7 @@ class CampaignGame(BreachShift):
         self.next_zombie_id = 0
         level = self.levels[self.progress.level_index]
         self.player.setPos(*level.player_spawn, 0)
+        self.previous_view_position = Point3(self.player.getPos())
         bounds = level.bounds
         self.floor.setPos(bounds.min_x, bounds.min_y, -0.2)
         self.floor.setScale(bounds.width, bounds.depth, 0.2)
@@ -159,7 +191,9 @@ class CampaignGame(BreachShift):
         world.apply(self.reality.state, self.progress.core_collected)
         breach = self.reality.state is Reality.BREACH
         self.floor.setColor((0.18, 0.1, 0.24, 1) if breach else (0.22, 0.3, 0.28, 1))
-        self.setBackgroundColor((0.1, 0.025, 0.14) if breach else (0.035, 0.065, 0.07))
+        self.setBackgroundColor((0.075, .035, .11) if breach else world.background)
+        world.environment.setColorScale((.72, .62, .92, 1) if breach else (1, 1, 1, 1))
+        apply_atmosphere(self.render, breach, world.level.number)
         grid = world.grids[self.reality.state]
         for zombie in self.zombies.values():
             zombie.set_context(self.clock.getFrameTime(), self.reality.state)
@@ -200,10 +234,11 @@ class CampaignGame(BreachShift):
                 self.show_notice("Recover the power core in Breach reality.")
             elif self.progress.collect_core():
                 self.weapon.reserve_ammo += 24
+                self.director.seal()
                 self.player_health.heal(20)
                 self.apply_reality()
                 self.update_weapon_hud()
-                self.show_notice("Core recovered. Ammunition supplied. Clear the map and reach the exit.", 4)
+                self.show_notice("Core recovered. Reinforcements sealed. Clear the remaining zombies and reach the exit.", 5)
         elif (position - Point3(*level.exit, 0)).length() <= 2:
             if self.progress.advance(self.enemies_remaining):
                 if self.progress.complete:
@@ -233,14 +268,24 @@ class CampaignGame(BreachShift):
         if not self.campaign_ready:
             return super().update_targets(task)
         world = self.world
+        now = self.clock.getFrameTime()
+        elapsed = max(0.0, now - self.last_encounter_time)
+        self.last_encounter_time = now
         if world is None or not self.can_act():
+            self.trigger_held = False
             return Task.cont
         dt = min(self.clock.getDt(), 0.05)
-        now = self.clock.getFrameTime()
+        if self.trigger_held and self.weapon.automatic:
+            super().shoot()
+        self.spawn_reinforcements(self.director.advance(elapsed, self.enemies_remaining))
         player = self.player.getPos()
         grid = world.grids[self.reality.state]
         for zombie in list(self.zombies.values()):
             if zombie.health <= 0:
+                if zombie.died_at is not None and now - zombie.died_at >= 10:
+                    zombie.root.removeNode()
+                    self.zombies.pop(zombie.name, None)
+                    self.targets.pop(zombie.name, None)
                 continue
             origin = zombie.root.getPos() + Vec3(0, 0, 0.9)
             clear = self.query_collision(origin, player + Vec3(0, 0, 0.9)) is None
@@ -249,11 +294,63 @@ class CampaignGame(BreachShift):
                     self.damage_player(action.damage)
                 elif action.kind == "spit":
                     self.spawn_projectile(origin, player + Vec3(0, 0, 0.9), action.damage)
-                elif action.kind == "summon" and self.enemies_remaining < 12:
+                elif action.kind == "summon" and self.enemies_remaining < self.director.max_alive:
                     x, y = grid.nearest_free((zombie.root.getX() + 1, zombie.root.getY()))
                     self.spawn_zombie(ZombieKind.WALKER, x, y)
+            zombie.update_animation(dt, player)
         self.update_projectiles(dt)
+        self.update_pickups(elapsed)
+        moving = (player - self.previous_view_position).lengthSquared() > .0001
+        self.previous_view_position = Point3(player)
+        self.weapon_view.update(dt, moving)
         return Task.cont
+
+    def spawn_reinforcements(self, count: int) -> None:
+        if count <= 0 or self.world is None:
+            return
+        grid = self.world.grids[self.reality.state]
+        player = self.player.getPos()
+        candidates = grid.connected_positions((player.x, player.y))
+        self.random.shuffle(candidates)
+        kinds = [kind for kind in ZOMBIE_ORDER[:self.progress.level_index + 1]
+                 if kind is not ZombieKind.WARDEN]
+        spawned = 0
+        for x, y in candidates:
+            if spawned >= count or self.enemies_remaining >= self.director.max_alive:
+                break
+            if hypot(x - player.x, y - player.y) < 12:
+                continue
+            if not all(other.is_free(x, y) for other in self.world.grids.values()):
+                continue
+            if any(zombie.health > 0 and hypot(x - zombie.root.getX(), y - zombie.root.getY()) < 1.5
+                   for zombie in self.zombies.values()):
+                continue
+            self.spawn_zombie(self.random.choice(kinds), x, y)
+            spawned += 1
+        if spawned:
+            self.show_notice(f"Wave {self.director.wave}: {spawned} reinforcements!", 3)
+
+    def update_pickups(self, dt: float) -> None:
+        player = self.player.getPos()
+        for pickup in list(self.pickups):
+            position = pickup.root.getPos(self.render)
+            expired = not pickup.update(dt)
+            nearby = (self.player_health.is_alive and hypot(position.x - player.x, position.y - player.y) <= 1.5
+                      and abs(position.z - player.z) < 1.8)
+            collected = not expired and nearby and self.query_collision(position + Vec3(0, 0, .2), player + Vec3(0, 0, .5)) is None
+            if collected:
+                self.arsenal.add_ammo(pickup.reward.kind, pickup.reward.rounds)
+                name = self.arsenal.weapons[pickup.reward.kind].name
+                self.show_notice(f"{name}: +{pickup.reward.rounds} reserve rounds", 2)
+                self.update_weapon_hud()
+            if expired or collected:
+                pickup.destroy()
+                self.pickups.remove(pickup)
+
+    def clear_pickups(self) -> None:
+        for pickup in self.pickups:
+            pickup.destroy()
+        self.pickups.clear()
 
     def spawn_projectile(self, origin: Point3, destination: Point3, damage: int):
         direction = destination - origin
@@ -262,13 +359,8 @@ class CampaignGame(BreachShift):
         direction.normalize()
         node = self.render.attachNewNode("spit-projectile")
         node.setPos(origin)
-        model = self.load_single_model("models/box")
-        model.reparentTo(node)
-        model.setPos(-0.1, -0.1, -0.1)
-        model.setScale(0.2)
-        model.setTextureOff(1)
-        model.setColor(0.1, 1, 0.2, 1)
-        model.setCollideMask(BitMask32.allOff())
+        model = part(node, "acid-projectile", sphere(10, 6), (0, 0, 0), (.10, .10, .10), (.15, .9, .2, 1), "metal")
+        model.setLightOff(2)
         self.projectiles.append(SpitProjectile(node, direction * 8, damage))
 
     def update_projectiles(self, dt: float):
@@ -307,17 +399,47 @@ class CampaignGame(BreachShift):
             super().jump_player()
 
     def shoot(self):
-        if not self.campaign_ready or self.can_act():
+        if not self.campaign_ready:
             super().shoot()
+        elif self.can_act():
+            self.trigger_held = True
+            super().shoot()
+
+    def release_trigger(self):
+        self.trigger_held = False
+
+    def select_weapon(self, kind: WeaponKind):
+        if not self.can_act() or kind is self.arsenal.selected:
+            return
+        self.taskMgr.remove("reload-weapon")
+        self.weapon = self.arsenal.select(kind)
+        self.trigger_held = False
+        self.weapon_view.equip(kind)
+        self.update_weapon_hud()
+
+    def on_weapon_fired(self):
+        if self.campaign_ready:
+            self.weapon_view.fire(self.weapon.damage)
+
+    def on_targets_cleared(self):
+        # Campaign statistics remain live while the uncollected core can spawn waves.
+        pass
 
     def reload_weapon(self):
         if not self.campaign_ready or self.can_act():
             super().reload_weapon()
 
-    def damage_target(self, target: Target):
+    def damage_target(self, target: Target, damage: int | None = None):
         if isinstance(target, Zombie):
             target.set_context(self.clock.getFrameTime(), self.reality.state)
-        super().damage_target(target)
+        accepted = super().damage_target(target, damage)
+        if accepted and isinstance(target, Zombie) and target.health == 0 and not target.loot_dropped:
+            target.loot_dropped = True
+            target.died_at = self.clock.getFrameTime()
+            if len(self.pickups) >= 64:
+                self.pickups.pop(0).destroy()
+            self.pickups.append(AmmoPickup(self.render, target.root.getPos(self.render), roll_ammo(self.random)))
+        return accepted
 
     def update_target_hud(self):
         if not self.campaign_ready:
@@ -350,7 +472,9 @@ class CampaignGame(BreachShift):
         exit_hint = f"{'E - Enter' if ready else 'Locked'} | {self.navigation_hint(level.exit)}"
         text = (f"Map {level.number}/{len(self.levels)}: {level.name}\n"
                 f"New zombie: {level.introduced.value.title()}\nZombies remaining: {remaining}\n"
-                f"Core: {core}\nExit: {exit_hint}")
+                f"Core: {core}\nExit: {exit_hint}\n"
+                + ("Reinforcements: sealed" if self.director.sealed
+                   else f"Wave {self.director.wave + 1} in {self.director.remaining:.0f}s"))
         if self.progress.complete:
             text = f"Campaign complete!\nAll {len(self.levels)} maps survived.\nT - Play again"
         elif not self.player_health.is_alive:

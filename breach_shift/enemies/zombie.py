@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from math import hypot, pi, sin
 
-from panda3d.core import BitMask32, CollisionBox, NodePath, Point3, Vec3
+from panda3d.core import BitMask32, CardMaker, CollisionBox, NodePath, Point3, TextNode, Vec3
 
+from breach_shift.art.characters import make_zombie_model
 from breach_shift.world.navigation import NavigationGrid, Position
 from breach_shift.world.reality import Reality
 from breach_shift.combat.target import Target
@@ -16,23 +17,17 @@ class ZombieAction:
 
 
 class Zombie(Target):
-    """A damageable placeholder actor with one of ten combat behaviors."""
+    """An articulated infected actor with one of ten combat behaviors."""
 
     def __init__(self, parent: NodePath, cube: NodePath, position: Point3,
                  kind: ZombieKind, name: str, now: float = 0.0) -> None:
         self.kind = kind
         self.spec = ZOMBIE_SPECS[kind]
-        super().__init__(parent, NodePath("zombie-model"), position,
+        super().__init__(parent, make_zombie_model(kind), position,
                          max_health=self.spec.health, name=name)
         self.model.setScale(1)
-        height = 2.2 if kind in (ZombieKind.BRUTE, ZombieKind.WARDEN) else 1.8
+        height = self.spec.height
         radius = self.spec.radius
-        body = cube.copyTo(self.model)
-        body.setPos(-radius, -radius, 0)
-        body.setScale(radius * 2, radius * 2, height - 0.4)
-        head = cube.copyTo(self.model)
-        head.setPos(-0.22, -0.22, height - 0.4)
-        head.setScale(0.44, 0.44, 0.4)
         cube.removeNode()
         self.default_color = self.spec.color
         self.restore_color()
@@ -54,6 +49,59 @@ class Zombie(Target):
         self.lunge_started = 0.0
         self.lunge_direction = Vec3(0, 1, 0)
         self.impact_available = False
+        self.loot_dropped = False
+        self.died_at: float | None = None
+        self.animation_time = 0.0
+        self.previous_visual_position = Point3(position)
+        self.arms = [self.model.find(f"**/arm-{side}") for side in ("left", "right")]
+        self.legs = [self.model.find(f"**/leg-{side}") for side in ("left", "right")]
+        self.health_display = self.root.attachNewNode("enemy-health")
+        self.health_display.setZ(height + .14)
+        self.health_display.setBillboardPointEye()
+        self.health_display.setLightOff(2)
+        background = CardMaker("health-background")
+        background.setFrame(-.33, .33, -.01, .065)
+        self.health_display.attachNewNode(background.generate()).setColor(.05, .05, .05, 1)
+        fill = CardMaker("health-fill")
+        fill.setFrame(0, .64, 0, .045)
+        self.health_fill = self.health_display.attachNewNode(fill.generate())
+        self.health_fill.setPos(-.32, -.005, 0)
+        self.health_fill.setColor(.7, .14, .10, 1)
+        self.health_label = TextNode("enemy-health-label")
+        self.health_label.setAlign(TextNode.ACenter)
+        label = self.health_display.attachNewNode(self.health_label)
+        label.setPos(0, 0, .09)
+        label.setScale(.08)
+        self.update_health_display()
+
+    def restore_color(self) -> None:
+        self.model.clearColor()
+        self.model.setColorScale(1, 1, 1, 1)
+
+    def flash_hit(self) -> None:
+        self.model.setColorScale(1.8, .9, .35, 1)
+
+    def update_health_display(self) -> None:
+        self.health_fill.setSx(self.health / self.max_health)
+        self.health_label.setText(f"{self.kind.value.title()} {self.health}/{self.max_health}")
+
+    def update_animation(self, dt: float, player: Point3) -> None:
+        if self.health <= 0:
+            return
+        self.animation_time += dt
+        position = self.root.getPos()
+        moving = (position - self.previous_visual_position).lengthSquared() > .00001
+        self.previous_visual_position = Point3(position)
+        if hypot(player.x - position.x, player.y - position.y) > .01:
+            self.root.lookAt(player.x, player.y, position.z)
+        swing = sin(self.animation_time * (10 if self.kind is ZombieKind.RUNNER else 6)) * (22 if moving else 2)
+        for index, (arm, leg) in enumerate(zip(self.arms, self.legs)):
+            phase = -1 if index else 1
+            arm.setP(-swing * phase - (35 if self.windup_until else 8))
+            leg.setP(swing * phase)
+        distance = hypot(player.x - position.x, player.y - position.y)
+        hidden = self.kind is ZombieKind.STALKER and self.current_reality is Reality.NORMAL and distance > 4
+        self.health_display.hide() if hidden or distance > 18 else self.health_display.show()
 
     def set_context(self, now: float, reality: Reality) -> None:
         if reality is not self.current_reality:
@@ -71,6 +119,7 @@ class Zombie(Target):
         if accepted:
             self.last_hit_at = self.current_time
             self.healing_fraction = 0.0
+            self.update_health_display()
         return accepted
 
     def _move(self, dt: float, now: float, goal: Point3, grid: NavigationGrid) -> None:
@@ -107,6 +156,7 @@ class Zombie(Target):
             recovered = int(self.healing_fraction)
             self.healing_fraction -= recovered
             self.health = min(self.max_health, self.health + recovered)
+            self.update_health_display()
         if self.kind is ZombieKind.HOWLER and line_clear and distance < 9 and now >= self.next_summon and self.summons_used < 2:
             actions.append(ZombieAction("summon"))
             self.summons_used += 1
@@ -114,7 +164,7 @@ class Zombie(Target):
 
         if self.kind is ZombieKind.WARDEN:
             if self.windup_until is not None:
-                self.model.setColor(1, 0.1, 0.3, 1)
+                self.model.setColorScale(2, .25, .35, 1)
                 if now >= self.windup_until:
                     if line_clear and distance <= 3.2 and player.z < 0.5:
                         actions.append(ZombieAction("hit", self.spec.damage))
@@ -128,7 +178,7 @@ class Zombie(Target):
             return actions
 
         if self.windup_until is not None:
-            self.model.setColor(1, 0.15, 0.1, 1)
+            self.model.setColorScale(2, .3, .2, 1)
             if now < self.windup_until:
                 return actions
             self.windup_until = None

@@ -15,8 +15,10 @@ lighting. The user approved [the generated fortress appearance](../assets/concep
 on 2026-11-16. Its assignment to Quarantine Yard below is a proposed implementation choice.
 
 Concept images are visual proposals for review. They are not finished 3D models,
-rigs, animations, or screenshots of the current game. Runtime levels remain
-playable blockouts while production art is developed.
+rigs, animations, or screenshots of the current game. The running game now has
+an initial procedural 3D art pass: ten articulated zombie models, four weapons,
+textured level surfaces and fortress scenery. The concept images remain the
+visual quality target for later detailed modeling and texturing.
 
 ## Character silhouettes
 

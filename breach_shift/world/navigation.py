@@ -87,3 +87,9 @@ class NavigationGrid:
                 priority = cost + abs(neighbor[0] - goal_cell[0]) + abs(neighbor[1] - goal_cell[1])
                 heapq.heappush(frontier, (priority, neighbor))
         return []
+
+    def connected_positions(self, point: Position) -> list[Position]:
+        """Return safe ground positions in the point's reachable component."""
+        origin = self._cell(self.nearest_free(point))
+        component = self.components[origin]
+        return [self._position(cell) for cell in self.free if self.components[cell] == component]

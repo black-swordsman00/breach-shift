@@ -1,4 +1,4 @@
-
+from breach_shift.combat.catalog import WeaponSpec
 
 
 class Weapon:
@@ -10,8 +10,19 @@ class Weapon:
         fire_interval: float = 0.25,
         magazine_size: int = 12,
         reserve_ammo: int = 36,
-        reload_time: float = 1.5
+        reload_time: float = 1.5,
+        *,
+        spec: WeaponSpec | None = None,
     ) -> None:
+        if spec is not None:
+            damage, fire_interval = spec.damage, spec.fire_interval
+            magazine_size, reserve_ammo = spec.magazine_size, spec.reserve_ammo
+            reload_time = spec.reload_time
+        self.name = spec.name if spec else "Pistol"
+        self.range = spec.range if spec else 100.0
+        self.automatic = spec.automatic if spec else False
+        self.pellets = spec.pellets if spec else 1
+        self.spread = spec.spread if spec else 0.0
         self.damage = damage
         self.fire_interval = fire_interval
         self.magazine_size = magazine_size
@@ -50,6 +61,9 @@ class Weapon:
 
         self.ammo += loaded
         self.reserve_ammo -= loaded
+        self.is_reloading = False
+
+    def cancel_reload(self) -> None:
         self.is_reloading = False
 
 

@@ -2,6 +2,7 @@ from breach_shift.combat.target import Target
 from breach_shift.player.jump import PlayerJump
 from breach_shift.training.session import TrainingSession
 from breach_shift.combat.weapon import Weapon
+from random import uniform
 from direct.gui.OnscreenText import OnscreenText
 from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
@@ -14,8 +15,9 @@ from panda3d.core import (AmbientLight, ClockObject, DirectionalLight,
 class BreachShift(ShowBase):
 
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *, headless: bool = False):
+        self.headless = headless
+        super().__init__(windowType="offscreen" if headless else None)
 
         if self.camera is None:
             raise RuntimeError("The camera has not been initialized.")
@@ -81,13 +83,14 @@ class BreachShift(ShowBase):
 
         window = self.win
 
-        if window is None or not isinstance(window, GraphicsWindow):
+        if not headless and (window is None or not isinstance(window, GraphicsWindow)):
             raise RuntimeError("Mouse look requires a graphics window.")
 
         properties = WindowProperties()
         properties.setCursorHidden(True)
         properties.setMouseMode(WindowProperties.M_confined)
-        window.requestProperties(properties)
+        if isinstance(window, GraphicsWindow):
+            window.requestProperties(properties)
 
         self.taskMgr.add(
             self.update_mouse_look,
@@ -457,25 +460,29 @@ class BreachShift(ShowBase):
         self.training_session.record_shot(now)
         self.update_training_hud()
         self.update_weapon_hud()
+        self.on_weapon_fired()
 
-        #Aim through the center of the screen.
+        # A shotgun spends one shell, but traces several independently blocked pellets.
+        for _ in range(self.weapon.pellets):
+            spread = self.weapon.spread
+            x, y = (uniform(-spread, spread), uniform(-spread, spread)) if spread else (0, 0)
+            self.shot_ray.setFromLens(camera_node, x, y)
+            self.shot_queue.clearEntries()
+            self.shot_traverser.traverse(self.render)
+            if self.shot_queue.getNumEntries() == 0:
+                continue
+            self.shot_queue.sortEntries()
+            entry = self.shot_queue.getEntry(0)
+            distance = (entry.getSurfacePoint(self.render) - self.camera.getPos(self.render)).length()
+            if distance > self.weapon.range:
+                continue
+            target = self.targets.get(entry.getIntoNodePath().getNetTag("target"))
+            if target is not None:
+                self.damage_target(target, max(1, self.weapon.damage // self.weapon.pellets))
         self.shot_ray.setFromLens(camera_node, 0, 0)
-        self.shot_queue.clearEntries()
-        self.shot_traverser.traverse(self.render)
 
-        if self.shot_queue.getNumEntries() == 0:
-            return
-
-        #Only the nearest collision receives the shot.
-        self.shot_queue.sortEntries()
-        entry = self.shot_queue.getEntry(0)
-        hit_object = entry.getIntoNodePath()
-
-        target_name = hit_object.getNetTag("target")
-        target = self.targets.get(target_name)
-
-        if target is not None:
-            self.damage_target(target)
+    def on_weapon_fired(self):
+        """Allow a game mode to animate a shot after ammunition is consumed."""
 
 
 
@@ -567,6 +574,7 @@ class BreachShift(ShowBase):
 
     def update_weapon_hud(self):
         text = (
+            f"{self.weapon.name} | Damage: {self.weapon.damage}\n"
             f"Ammo: {self.weapon.ammo}/{self.weapon.magazine_size}"
             f" | Reserve: {self.weapon.reserve_ammo}"
         )
@@ -623,13 +631,13 @@ class BreachShift(ShowBase):
         lines.append("T - Restart Training")
         self.target_hud.setText("\n".join(lines))
 
-    def damage_target(self, target: Target):
-        if not target.take_damage(self.weapon.damage):
-            return
+    def damage_target(self, target: Target, damage: int | None = None):
+        if not target.take_damage(self.weapon.damage if damage is None else damage):
+            return False
 
         self.training_session.record_hit()
         if all(target.health == 0 for target in self.targets.values()):
-            self.training_session.finish(self.clock.getFrameTime())
+            self.on_targets_cleared()
         self.update_training_hud()
 
         self.show_hitmarker()
@@ -639,7 +647,7 @@ class BreachShift(ShowBase):
         self.taskMgr.remove(task_name)
 
         if target.health == 0:
-            return
+            return True
 
         target.flash_hit()
 
@@ -650,6 +658,10 @@ class BreachShift(ShowBase):
             extraArgs=[target],
             appendTask= True
         )
+        return True
+
+    def on_targets_cleared(self):
+        self.training_session.finish(self.clock.getFrameTime())
 
     def setup_training_hud(self):
         self.training_hud = OnscreenText(

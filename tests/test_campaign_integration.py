@@ -10,6 +10,7 @@ from breach_shift.world.reality import Reality
 from breach_shift.training.session import TrainingSession
 from breach_shift.combat.weapon import Weapon
 from breach_shift.enemies.catalog import ZombieKind
+from breach_shift.combat.catalog import WEAPON_ORDER, WEAPON_SPECS, WeaponKind
 
 
 class CampaignIntegrationTests(unittest.TestCase):
@@ -282,3 +283,115 @@ class CampaignIntegrationTests(unittest.TestCase):
         game.progress.collect_core()
         game.update_campaign_hud()
         self.assertIn("Core: Recovered", self.campaign_hud.setText.call_args.args[0])
+
+    def test_weapon_switching_updates_the_visible_model_and_cancels_old_reload(self):
+        game = self.game
+        game.shoot()
+        pistol = game.weapon
+        game.reload_weapon()
+        game.select_weapon(WeaponKind.RIFLE)
+        self.assertFalse(pistol.is_reloading)
+        self.assertEqual(game.weapon.damage, 38)
+        self.assertFalse(game.weapon_view.root.find("**/rifle-model").isEmpty())
+        game.finish_weapon_reload(None)
+        game.select_weapon(WeaponKind.PISTOL)
+        self.assertEqual(game.weapon.ammo, 11)
+        self.game.taskMgr.remove.assert_any_call("reload-weapon")
+
+    def test_every_weapon_deals_its_damage_and_shotgun_uses_one_shell(self):
+        game = self.game
+        zombie = game.spawn_zombie(ZombieKind.WARDEN, game.player.getX(), game.player.getY() + 3)
+        game.reality.state = Reality.BREACH
+        game.apply_reality()
+        self.camera.lookAt(zombie.root, Point3(0, 0, 1))
+        for kind in WEAPON_ORDER:
+            with self.subTest(kind=kind):
+                zombie.health = zombie.max_health
+                game.select_weapon(kind)
+                self.tick(2)
+                game.shoot()
+                self.assertEqual(zombie.max_health - zombie.health, WEAPON_SPECS[kind].damage)
+                self.assertEqual(game.weapon.ammo, game.weapon.magazine_size - 1)
+        self.assertEqual(game.training_session.shots, 4)
+        self.assertEqual(game.training_session.hits, 4)
+
+    def test_dead_enemy_drops_once_and_pickup_adds_only_its_ammunition(self):
+        game = self.game
+        zombie = next(iter(game.zombies.values()))
+        zombie.root.setPos(game.player.getX(), game.player.getY() + 1, 0)
+        game.damage_target(zombie, 1000)
+        self.assertEqual(len(game.pickups), 1)
+        pickup = game.pickups[0]
+        weapon = game.arsenal.weapons[pickup.reward.kind]
+        before = weapon.reserve_ammo
+        game.damage_target(zombie, 1000)
+        self.assertEqual(len(game.pickups), 1)
+        game.update_pickups(.05)
+        self.assertFalse(game.pickups)
+        self.assertEqual(weapon.reserve_ammo, before + pickup.reward.rounds)
+
+    def test_expired_loot_and_retry_remove_old_pickups(self):
+        game = self.game
+        zombie = next(iter(game.zombies.values()))
+        game.damage_target(zombie, 1000)
+        pickup = game.pickups[0]
+        game.player.setPos(pickup.root.getX(), pickup.root.getY(), 0)
+        before = game.arsenal.weapons[pickup.reward.kind].reserve_ammo
+        game.update_pickups(91)
+        self.assertEqual(game.arsenal.weapons[pickup.reward.kind].reserve_ammo, before)
+        self.assertFalse(game.pickups)
+        zombie = next(zombie for zombie in game.zombies.values() if zombie.health > 0)
+        game.damage_target(zombie, 1000)
+        game.restart_training()
+        self.assertFalse(game.pickups)
+        self.assertEqual(game.director.elapsed, 0)
+
+    def test_reinforcements_are_reachable_distant_and_use_only_introduced_enemies(self):
+        game = self.game
+        original = set(game.zombies)
+        self.tick(31)
+        game.update_targets(None)
+        additions = [zombie for name, zombie in game.zombies.items() if name not in original]
+        self.assertEqual(len(additions), 3)
+        for zombie in additions:
+            self.assertIs(zombie.kind, ZombieKind.WALKER)
+            self.assertGreaterEqual((zombie.root.getPos() - game.player.getPos()).length(), 11.9)
+            for grid in game.world.grids.values():
+                self.assertTrue(grid.is_free(zombie.root.getX(), zombie.root.getY()))
+            grid = game.world.grids[game.reality.state]
+            self.assertTrue(grid.find_path((game.player.getX(), game.player.getY()),
+                                           (zombie.root.getX(), zombie.root.getY())))
+
+    def test_unfocused_time_does_not_advance_waves_and_core_seals_them(self):
+        game = self.game
+        self.window.getProperties().getForeground.return_value = False
+        self.tick(100)
+        game.update_targets(None)
+        self.window.getProperties().getForeground.return_value = True
+        self.tick()
+        game.update_targets(None)
+        self.assertEqual(game.enemies_remaining, self.initial_enemies)
+        game.player.setPos(*self.level.core, 0)
+        game.shift_reality()
+        game.interact()
+        self.assertTrue(game.director.sealed)
+        self.tick(100)
+        game.update_targets(None)
+        self.assertEqual(game.enemies_remaining, self.initial_enemies)
+
+    def test_automatic_fire_requires_hold_and_stops_on_release_and_focus_loss(self):
+        game = self.game
+        game.select_weapon(WeaponKind.SMG)
+        game.shoot()
+        self.tick(.1)
+        game.update_targets(None)
+        self.assertEqual(game.weapon.ammo, 28)
+        game.release_trigger()
+        self.tick(.1)
+        game.update_targets(None)
+        self.assertEqual(game.weapon.ammo, 28)
+        game.shoot()
+        self.window.getProperties().getForeground.return_value = False
+        self.tick(.1)
+        game.update_targets(None)
+        self.assertFalse(game.trigger_held)
