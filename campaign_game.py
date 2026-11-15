@@ -2,9 +2,9 @@ from dataclasses import dataclass
 
 from direct.gui.OnscreenText import OnscreenText
 from direct.task import Task
-from panda3d.core import (BitMask32, CollisionHandlerQueue, CollisionNode,
+from panda3d.core import (BitMask32, CollisionHandlerQueue, CollisionNode, CollisionPlane,
                          CollisionSegment, CollisionTraverser, GraphicsWindow,
-                         NodePath, Point3, TextNode, Vec3)
+                         NodePath, Plane, Point3, TextNode, Vec3)
 
 from campaign_state import CampaignProgress
 from campaign_world import CampaignWorld
@@ -122,6 +122,18 @@ class CampaignGame(BreachShift):
         self.shift_held = False
         self.next_zombie_id = 0
         level = self.levels[self.progress.level_index]
+        self.player.setPos(*level.player_spawn, 0)
+        bounds = level.bounds
+        self.floor.setPos(bounds.min_x, bounds.min_y, -0.2)
+        self.floor.setScale(bounds.width, bounds.depth, 0.2)
+        boundaries = self.arena_boundaries.node()
+        boundaries.clearSolids()
+        for normal, point in (
+                (Vec3(1, 0, 0), Point3(bounds.min_x, 0, 0)),
+                (Vec3(-1, 0, 0), Point3(bounds.max_x, 0, 0)),
+                (Vec3(0, 1, 0), Point3(0, bounds.min_y, 0)),
+                (Vec3(0, -1, 0), Point3(0, bounds.max_y, 0))):
+            boundaries.addSolid(CollisionPlane(Plane(normal, point)))
         self.world = CampaignWorld(self.render, self.load_single_model("models/box"), level)
         for spawn in level.spawns:
             self.spawn_zombie(spawn.kind, spawn.x, spawn.y)

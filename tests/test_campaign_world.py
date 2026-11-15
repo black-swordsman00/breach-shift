@@ -50,3 +50,8 @@ class CampaignWorldTests(unittest.TestCase):
         self.world.apply(Reality.NORMAL, True)
         self.world.apply(Reality.BREACH, True)
         self.assertTrue(self.world.core.isStashed())
+
+    def test_shift_destinations_must_stay_inside_the_map(self):
+        bounds = self.world.level.bounds
+        self.assertFalse(self.world.destination_safe(Point3(bounds.max_x + 1, 0, 5), Reality.BREACH))
+        self.assertFalse(self.world.destination_safe(Point3(0, bounds.max_y + 1, 5), Reality.NORMAL))

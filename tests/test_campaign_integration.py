@@ -1,9 +1,11 @@
+from dataclasses import replace
 import unittest
 from unittest.mock import MagicMock, patch
 
 from panda3d.core import Camera, ClockObject, GraphicsWindow, NodePath, Point3
 
 from campaign_game import CampaignGame
+from level_data import MapBounds
 from reality import Reality
 from training_session import TrainingSession
 from weapon import Weapon
@@ -209,3 +211,27 @@ class CampaignIntegrationTests(unittest.TestCase):
         assert world is not None
         self.assertTrue(world.grids[Reality.NORMAL].is_free(zombie.root.getX(), zombie.root.getY()))
         self.assertEqual(zombie.health, 50)
+
+    def test_loading_a_large_map_updates_floor_boundaries_grounding_and_retry(self):
+        game = self.game
+        level = replace(game.levels[0], bounds=MapBounds(-30, 30, -15, 75), player_spawn=(20, -10))
+        game.levels = (level, *game.levels[1:])
+        game.load_level()
+        self.assertEqual(game.player.getPos(), Point3(20, -10, 0))
+        self.assertAlmostEqual(game.floor.getX(), -30)
+        self.assertAlmostEqual(game.floor.getY(), -15)
+        self.assertAlmostEqual(game.floor.getSx(), 60)
+        self.assertAlmostEqual(game.floor.getSy(), 90)
+        game.update_collisions(None)
+        self.assertEqual(game.player.getPos(), Point3(20, -10, 0))
+        game.jump_player()
+        for _ in range(40):
+            game.update_movement(None)
+            game.update_collisions(None)
+        self.assertTrue(game.jump_state.is_grounded)
+        self.assertAlmostEqual(game.player.getZ(), 0)
+        game.player.setPos(29.9, -10, 0)
+        game.update_collisions(None)
+        self.assertLessEqual(game.player.getX(), 29.61)
+        game.restart_training()
+        self.assertEqual(game.player.getPos(), Point3(20, -10, 0))
