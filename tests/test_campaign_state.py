@@ -35,7 +35,7 @@ class CampaignStateTests(unittest.TestCase):
 
     def test_map_rosters_introduce_exactly_one_new_kind_in_order(self):
         levels = load_levels()
-        self.assertLessEqual(len(levels), 10)
+        self.assertEqual(len(levels), 10)
         for level in levels:
             with self.subTest(level=level.name):
                 self.assertIs(level.introduced, ZOMBIE_ORDER[level.number - 1])
