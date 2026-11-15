@@ -2,13 +2,15 @@
   "number": 2,
   "name": "Service Tunnels",
   "introduced": "runner",
+  "bounds": [-32, 32, -15, 81],
+  "player_spawn": [0, -10],
   "briefing": "Runners close the distance quickly. Use the service lanes and keep an escape route open.",
-  "normal_gate_y": 7,
-  "breach_gate_y": 14,
-  "core": [-3, 10.5],
-  "exit": [6, 18],
-  "shared_blocks": [[-5, 2, 1, 8, 2.5], [5, 1, 1, 8, 2.5], [3, 10, 2, 3, 2], [-5, 16, 1, 4, 2.5], [3, 17, 2, 2, 1.5]],
-  "normal_blocks": [[-1, 3, 2, 1, 1.2]],
-  "breach_blocks": [[-3, 12, 3, 1, 2]],
-  "spawns": [["runner", 0, 5], ["walker", -7, 5], ["runner", 7, 10]]
+  "normal_gate_y": 32,
+  "breach_gate_y": 57,
+  "core": [-10, 44],
+  "exit": [20, 74],
+  "shared_blocks": [[-16, 9, 3, 30, 2.5], [16, 5, 3, 30, 2.5], [10, 43, 6, 11, 2], [-16, 66, 3, 18, 2.5], [10, 70, 6, 7, 1.5], [-27, 8, 7, 4, 2], [27, 26, 7, 4, 2], [-1, 17, 5, 3, 1.2], [0, 61, 7, 4, 1.5]],
+  "normal_blocks": [[-4, 25, 6, 3, 1.2]],
+  "breach_blocks": [[-10, 50, 9, 3, 2]],
+  "spawns": [["runner", 0, 22], ["walker", -24, 22], ["runner", 24, 42], ["walker", -24, 46], ["runner", 25, 67], ["walker", -24, 76]]
 }
