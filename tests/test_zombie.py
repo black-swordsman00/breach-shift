@@ -105,7 +105,9 @@ class ZombieTests(unittest.TestCase):
     def test_brute_has_a_longer_windup_and_a_grounded_charge(self):
         zombie = self.make(ZombieKind.BRUTE)
         zombie.update_ai(0.05, 1, Point3(0, 4, 0), Reality.NORMAL, self.grid, True)
-        self.assertAlmostEqual(zombie.windup_until, 1.6)
+        windup = zombie.windup_until
+        assert windup is not None
+        self.assertAlmostEqual(windup, 1.6)
         zombie.update_ai(0.05, 1.3, Point3(0, 4, 0), Reality.NORMAL, self.grid, True)
         self.assertEqual(zombie.root.getY(), 0)
         zombie.update_ai(0.1, 1.7, Point3(0, 4, 0), Reality.NORMAL, self.grid, True)
