@@ -39,6 +39,7 @@ class CampaignGame(BreachShift):
 
     def setup_campaign(self):
         self.levels = load_levels()
+        self.move_speed = 6.5
         self.progress = CampaignProgress(len(self.levels))
         self.player_health = PlayerHealth()
         self.reality = RealityShift()

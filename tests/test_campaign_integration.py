@@ -2,7 +2,7 @@ from dataclasses import replace
 import unittest
 from unittest.mock import MagicMock, patch
 
-from panda3d.core import Camera, ClockObject, GraphicsWindow, NodePath, Point3
+from panda3d.core import Camera, ClockObject, GraphicsWindow, KeyboardButton, NodePath, Point3
 
 from campaign_game import CampaignGame
 from level_data import MapBounds
@@ -242,3 +242,24 @@ class CampaignIntegrationTests(unittest.TestCase):
         self.assertLessEqual(game.player.getX(), 29.61)
         game.restart_training()
         self.assertEqual(game.player.getPos(), Point3(20, -10, 0))
+
+    def test_campaign_pace_is_consistent_across_frame_rates_and_diagonal_input(self):
+        game = self.game
+        keyboard = MagicMock()
+        game.mouseWatcherNode = keyboard
+        for frame_rate in (20, 30, 60, 144):
+            for diagonal in (False, True):
+                with self.subTest(frame_rate=frame_rate, diagonal=diagonal):
+                    game.player.setPos(*self.level.player_spawn, 0)
+                    game.player.setH(0)
+                    game.jump_state.reset()
+                    start = game.player.getPos()
+                    keyboard.isButtonDown.side_effect = lambda button: (
+                        button == KeyboardButton.asciiKey("w")
+                        or (diagonal and button == KeyboardButton.asciiKey("d")))
+                    game.clock.setDt(1 / frame_rate)
+                    for _ in range(frame_rate):
+                        game.update_movement(None)
+                        game.update_collisions(None)
+                    distance = (game.player.getPos() - start).length()
+                    self.assertAlmostEqual(distance, 6.5, places=4)
