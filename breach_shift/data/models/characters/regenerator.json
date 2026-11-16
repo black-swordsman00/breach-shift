@@ -1,0 +1,41 @@
+{
+  "file": "regenerator.glb",
+  "triangles": 11800,
+  "bytes": 5163708,
+  "provider": "Breach Shift / MakeHuman",
+  "source_triangles": 42724,
+  "uv_layers_preserved": true,
+  "forward": "+Y",
+  "up": "+Z",
+  "units": "metres",
+  "height": 1.8,
+  "rig": "skinned-humanoid",
+  "source_sha256": "62661622bb1e5bd8b28158c45843ee9235a773aaab469d2b572124926f9324ad",
+  "provenance": "local-authored",
+  "texture_size": 1024,
+  "physique": "standard",
+  "high_source_retained": true,
+  "animation_joints": [
+    "arm-left",
+    "arm-right",
+    "leg-left",
+    "leg-right"
+  ],
+  "bounds": [
+    [
+      -0.2713606655597687,
+      -0.2614273726940155,
+      0.0
+    ],
+    [
+      0.2713606655597687,
+      0.2614273726940155,
+      1.7999999523162842
+    ]
+  ],
+  "dimensions": [
+    0.5427213311195374,
+    0.522854745388031,
+    1.7999999523162842
+  ]
+}

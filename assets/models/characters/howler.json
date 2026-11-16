@@ -1,0 +1,41 @@
+{
+  "file": "howler.glb",
+  "triangles": 11800,
+  "bytes": 5093112,
+  "provider": "Breach Shift / MakeHuman",
+  "source_triangles": 42712,
+  "uv_layers_preserved": true,
+  "forward": "+Y",
+  "up": "+Z",
+  "units": "metres",
+  "height": 1.8,
+  "rig": "skinned-humanoid",
+  "source_sha256": "a01e691f84a8f1f03035612c706e22b6fdc8d49ad7fd40c64b6a5a5995341291",
+  "provenance": "local-authored",
+  "texture_size": 1024,
+  "physique": "standard",
+  "high_source_retained": true,
+  "animation_joints": [
+    "arm-left",
+    "arm-right",
+    "leg-left",
+    "leg-right"
+  ],
+  "bounds": [
+    [
+      -0.26586490869522095,
+      -0.2135418802499771,
+      0.0
+    ],
+    [
+      0.26586490869522095,
+      0.2135418802499771,
+      1.7999999523162842
+    ]
+  ],
+  "dimensions": [
+    0.5317298173904419,
+    0.4270837604999542,
+    1.7999999523162842
+  ]
+}

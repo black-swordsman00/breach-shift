@@ -26,10 +26,10 @@ h1{font-size:32px;line-height:1.2;margin:8px 0 12px;letter-spacing:-1px}p{color:
 <header><div class="brand">BREACH <span>SHIFT</span></div><span class="tag">10 ZOMBIJA / 4 ORUŽJA</span></header>
 <main><div class="eyebrow">Pregled modela · Blender</div><h1>Izaberi sledeći detalj.</h1><p>Ovo su renderi stvarnih 3D modela. Izaberi lik ili oružje, uporedi statistike i otvori njegov Blender izvor za dalji dizajn.</p>
 <nav class="tabs" aria-label="Vrsta modela"><button id="zombies" aria-pressed="true">Zombiji</button><button id="weapons" aria-pressed="false">Oružje</button><button class="outline" id="engine">Pogledaj u igri ↗</button></nav>
-<section class="hero" aria-label="Izabrani model"><div class="stage"><img id="main-image" alt=""></div><div class="details"><div class="eyebrow" id="design"></div><h2 id="name"></h2><div class="metrics" id="metrics"></div><a class="source" id="blend">Otvori Blender fajl ↗</a><div class="hint">Primer zvuka</div><audio class="sound" id="audio" controls preload="none"></audio><div class="hint">Blender 4.5 LTS · teksture sačuvane u fajlu</div></div></section>
+<section class="hero" aria-label="Izabrani model"><div class="stage"><img id="main-image" alt=""></div><div class="details"><div class="eyebrow" id="design"></div><h2 id="name"></h2><div class="metrics" id="metrics"></div><a class="source" id="blend">Otvori Blender fajl ↗</a><div class="hint">Primer zvuka</div><audio class="sound" id="audio" controls preload="none"></audio><div class="hint">Blender 4.5 / 5.3 · teksture sačuvane u fajlu</div></div></section>
 <div class="cards" id="cards" aria-label="Dostupni modeli"></div>
-</main><footer>Prva anatomska Blender iteracija. Koncept slike ostaju vizuelni cilj; detaljna skeletna animacija i završna obrada mapa tek slede. <a href="../../docs/blender-workshop.md">Radni tok i izvori</a></footer>
-<dialog id="captures"><div class="dialogbar"><strong>Panda3D · stvarni prikaz</strong><button data-capture="zombie-roster.png">Zombiji</button><button data-capture="weapons.png">Oružje</button><button data-capture="gameplay.png">Gameplay</button><button id="close-captures" aria-label="Zatvori pregled">✕</button></div><img id="capture-image" src="zombie-roster.png" alt="Modeli prikazani u igri"></dialog>
+</main><footer>Skeletno animirani modeli, isporučeni Warden i lokalna dorada prvog dvorišta. Ostale mape zadržavaju raniju scenografiju; koncept slike ostaju vizuelni cilj. <a href="../../docs/blender-workshop.md">Radni tok i izvori</a></footer>
+<dialog id="captures"><div class="dialogbar"><strong>Panda3D · stvarni prikaz</strong><button data-capture="zombie-roster.png">Zombiji</button><button data-capture="weapons.png">Oružje</button><button data-capture="gameplay.png">Gameplay</button><button data-capture="gameplay-motion.png">Animacije</button><button id="close-captures" aria-label="Zatvori pregled">✕</button></div><img id="capture-image" src="zombie-roster.png" alt="Modeli prikazani u igri"></dialog>
 <script>
 const data=__DATA__;let category='zombies',selected=0;
 function choose(index){selected=index;const model=data[category][index];document.getElementById('main-image').src=model.image;document.getElementById('main-image').alt=model.name+' — Blender render';document.getElementById('name').textContent=model.name;document.getElementById('design').textContent=model.design;document.getElementById('metrics').innerHTML=model.metrics.map(m=>'<div class="metric"><b>'+m.value+'</b><span>'+m.label+'</span></div>').join('');document.getElementById('blend').href=model.blend;const sound=document.getElementById('audio');sound.pause();sound.src=model.audio;document.querySelectorAll('.card').forEach((card,i)=>card.setAttribute('aria-pressed',String(i===index)));}
@@ -40,17 +40,23 @@ document.getElementById('zombies').onclick=()=>show('zombies');document.getEleme
 
 def main():
     data = {"zombies": [], "weapons": []}
+    def provider(folder, kind):
+        path = ROOT / "assets/models" / folder / (kind.value + ".json")
+        return json.loads(path.read_text(encoding="utf-8")).get("provider") if path.is_file() else None
     for kind in ZOMBIE_ORDER:
         spec = ZOMBIE_SPECS[kind]
         design = json.loads((ROOT / "assets/designs/characters" / (kind.value + ".json")).read_text())
-        data["zombies"].append({"name": kind.value.title(), "design": design["name"],
+        source = provider("characters", kind)
+        label = design["name"] + (" / " + source if source else "")
+        data["zombies"].append({"name": kind.value.title(), "design": label,
             "image": f"characters/{kind.value}.png", "blend": f"../blender/characters/{kind.value}.blend",
             "audio": "../../breach_shift/data/audio/growl_1.wav", "summary": f"{spec.health} HP",
             "metrics": [{"value": spec.health, "label": "HP"}, {"value": spec.damage, "label": "DAMAGE"},
-                        {"value": f"{spec.speed} m/s", "label": "BRZINA"}, {"value": f"{spec.height} m", "label": "VISINA"}]})
+                        {"value": f"{spec.speed*1.2:.2f} m/s", "label": "POTERA"}, {"value": f"{spec.height} m", "label": "VISINA"}]})
     for kind in WEAPON_ORDER:
         spec = WEAPON_SPECS[kind]
-        data["weapons"].append({"name": spec.name, "design": "Breach Shift · originalni model",
+        source = provider("weapons", kind) or "Breach Shift · originalni model"
+        data["weapons"].append({"name": spec.name, "design": source,
             "image": f"weapons/{kind.value}.png", "blend": f"../blender/weapons/{kind.value}.blend",
             "audio": f"../../breach_shift/data/audio/{kind.value}.wav", "summary": f"{spec.damage} DMG",
             "metrics": [{"value": spec.damage, "label": "DAMAGE PO HICU"}, {"value": spec.magazine_size, "label": "KAPACITET OKVIRA"},

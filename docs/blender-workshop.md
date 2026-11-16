@@ -3,6 +3,11 @@
 Blender 4.5 LTS is the authoring tool. The game runs exported models directly;
 players do not need Blender, MakeHuman or network access.
 
+New environments use [the BlenderMCP production workflow](./production-assets.md)
+with Poly Haven and Poly Pizza. The first Rodin rifle and skinned Walker are
+documented in [the model handoff](./rodin-models.md). The tools below reproduce
+the retained earlier art library and skip migrated kinds to preserve their sources.
+
 ## Editable sources and reproduction
 
 - `assets/blender/characters/`: ten `.blend` character scenes with packed images.
@@ -55,8 +60,9 @@ preview's `--model-dir <directory>` allow checking a candidate before installati
 
 ## Current art limits
 
-These are the first anatomical Blender production sources, not photorealistic
-copies of the concept paintings. They use articulated rigid limb pivots for the
-current lightweight walk animation. Full skeletal locomotion, sculpted close-up
-skin, cloth simulation and final environment art remain later refinements.
-Compare actual Blender and game captures separately from the concept references.
+The eight earlier authored designs retain their original style. All ten current
+runtime characters now have full skinned humanoid rigs with locally driven gait,
+combat and death poses. The generated Walker and supplied Warden use their own
+detailed PBR textures. Cloth simulation and final environment art remain later
+refinements. See [the current motion handoff](./warden-and-motion.md) and compare
+actual Blender/game captures separately from concept references.

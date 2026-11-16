@@ -1,0 +1,1 @@
+"""Game interface components."""

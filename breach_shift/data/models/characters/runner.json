@@ -1,0 +1,41 @@
+{
+  "file": "runner.glb",
+  "triangles": 11800,
+  "bytes": 5035796,
+  "provider": "Breach Shift / MakeHuman",
+  "source_triangles": 42050,
+  "uv_layers_preserved": true,
+  "forward": "+Y",
+  "up": "+Z",
+  "units": "metres",
+  "height": 1.8,
+  "rig": "skinned-humanoid",
+  "source_sha256": "f06116aa87fbe7d6d875338c6712c18a2c3d699f38629635f41e3a32f9b548fd",
+  "provenance": "local-authored",
+  "texture_size": 1024,
+  "physique": "standard",
+  "high_source_retained": true,
+  "animation_joints": [
+    "arm-left",
+    "arm-right",
+    "leg-left",
+    "leg-right"
+  ],
+  "bounds": [
+    [
+      -0.261592298746109,
+      -0.22744914889335632,
+      0.0
+    ],
+    [
+      0.261592298746109,
+      0.22744914889335632,
+      1.8000000715255737
+    ]
+  ],
+  "dimensions": [
+    0.523184597492218,
+    0.45489829778671265,
+    1.8000000715255737
+  ]
+}

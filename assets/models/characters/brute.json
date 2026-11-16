@@ -1,0 +1,41 @@
+{
+  "file": "brute.glb",
+  "triangles": 11800,
+  "bytes": 4897668,
+  "provider": "Breach Shift / MakeHuman",
+  "source_triangles": 41364,
+  "uv_layers_preserved": true,
+  "forward": "+Y",
+  "up": "+Z",
+  "units": "metres",
+  "height": 2.2,
+  "rig": "skinned-humanoid",
+  "source_sha256": "9175af83def71d8a4e225010ad5b7e8a6a99701421fd3230c0bac70153c5e0e1",
+  "provenance": "local-authored",
+  "texture_size": 1024,
+  "physique": "standard",
+  "high_source_retained": true,
+  "animation_joints": [
+    "arm-left",
+    "arm-right",
+    "leg-left",
+    "leg-right"
+  ],
+  "bounds": [
+    [
+      -0.35881972312927246,
+      -0.3079216182231903,
+      0.0
+    ],
+    [
+      0.35881972312927246,
+      0.3079216182231903,
+      2.200000047683716
+    ]
+  ],
+  "dimensions": [
+    0.7176394462585449,
+    0.6158432364463806,
+    2.200000047683716
+  ]
+}

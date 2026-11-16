@@ -20,10 +20,18 @@ class BlenderImportTests(unittest.TestCase):
             self.assertEqual(result[0]["file"], "characters/walker.bam.pz")
             self.assertFalse((output / "characters/walker.bam").exists())
             with patch.object(library, "MODEL_ROOT", output):
-                model = library.instantiate("characters/walker.bam", lambda: self.fail("Primitive fallback used"))
+                model = library.instantiate("characters/walker.bam")
             self.assertEqual(model.getTag("source"), "blender")
             self.assertGreater(model.findAllTextures().getNumTextures(), 0)
             model.removeNode()
+
+    def test_missing_asset_is_reported_instead_of_replaced_with_primitives(self):
+        from breach_shift.art import library
+
+        with TemporaryDirectory() as directory, patch.object(library, "MODEL_ROOT", Path(directory)):
+            with self.assertRaisesRegex(FileNotFoundError, "Missing packaged model: characters/walker.bam"):
+                library.instantiate("characters/walker.bam")
+
     def test_import_preserves_pivots_and_embeds_textures_without_needing_the_glb(self):
         original = Path(__file__).resolve().parent / "fixtures/workshop.gltf"
         with TemporaryDirectory() as directory:

@@ -30,7 +30,8 @@ class CampaignWorld:
         for block in (*level.blocks, *perimeter):
             node = self.root.attachNewNode("level-block")
             node.setPos(block.x, block.y, 0)
-            dress_block(node, block, level.number)
+            dress_block(node, block, level.number,
+                        production=self.environment.hasTag("production-environment"))
             collider = CollisionNode("level-block-collider")
             collider.addSolid(CollisionBox(Point3(-block.width / 2, -block.depth / 2, 0),
                                            Point3(block.width / 2, block.depth / 2, block.height)))

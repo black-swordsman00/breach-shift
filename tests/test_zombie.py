@@ -62,6 +62,48 @@ class ZombieTests(unittest.TestCase):
         self.assertGreater(runner.root.getY(), walker.root.getY())
         self.assertGreater(shifted.root.getY(), walker.root.getY())
 
+    def test_pursuit_is_twenty_percent_faster_and_gait_stops_when_stationary(self):
+        zombie=self.make(ZombieKind.WALKER)
+        player=Point3(0,9,0)
+        for frame in range(20):
+            zombie.update_ai(.05,frame*.05,player,Reality.NORMAL,self.grid,True)
+            zombie.update_animation(.05,player)
+        self.assertAlmostEqual(zombie.root.getY(),1.44,places=5)
+        phase=zombie.motion.phase
+        for _ in range(10):
+            zombie.update_animation(.05,player)
+        self.assertEqual(zombie.motion.phase,phase)
+
+    def test_turns_blend_and_death_leaves_a_falling_body_without_collision(self):
+        zombie=self.make(ZombieKind.WALKER)
+        zombie.update_animation(.05,Point3(0,-5,0))
+        self.assertGreater(abs(zombie.root.getH()),1)
+        self.assertLess(abs(zombie.root.getH()),179)
+        zombie.take_damage(1000)
+        self.assertFalse(zombie.root.isStashed())
+        self.assertTrue(zombie.collider.isStashed())
+        for _ in range(15):
+            zombie.update_animation(.05,Point3(0,-5,0))
+        self.assertGreater(zombie.model.getP(),60)
+        self.assertFalse(zombie.take_damage(1))
+
+    def test_wide_warden_routes_with_clearance_for_its_actual_body(self):
+        wall=Block(0,3,4,2,3)
+        grid=NavigationGrid((wall,),Reality.NORMAL)
+        boss=self.make(ZombieKind.WARDEN)
+        for frame in range(240):
+            boss.update_ai(.05,frame*.05,Point3(0,9,0),Reality.NORMAL,grid,False)
+            p=boss.root.getPos()
+            self.assertFalse(wall.overlaps_xy(p.x,p.y,boss.spec.radius+.1))
+        self.assertGreater(boss.root.getY(),6)
+
+    def test_walking_around_cover_turns_toward_travel_instead_of_sliding_sideways(self):
+        zombie=self.make(ZombieKind.WALKER)
+        zombie.root.setX(.1)
+        zombie.update_animation(.05,Point3(0,10,0))
+        self.assertLess(zombie.root.getH(),-20)
+        self.assertGreater(zombie.root.getH(),-90)
+
     def test_armored_and_warden_damage_depend_on_reality(self):
         armor = self.make(ZombieKind.ARMORED)
         armor.take_damage(25)

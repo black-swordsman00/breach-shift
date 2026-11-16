@@ -97,7 +97,7 @@ def load_levels(directory: Path | None = None) -> tuple[LevelDefinition, ...]:
             Block(center_x, data["normal_gate_y"], bounds.width, 0.6, 3.5, Reality.NORMAL),
             Block(center_x, data["breach_gate_y"], bounds.width, 0.6, 3.5, Reality.BREACH),
         ]
-        for key, reality in (("shared_blocks", None), ("normal_blocks", Reality.NORMAL),
+        for key, reality in (("shared_blocks", None), ("prop_colliders", None), ("normal_blocks", Reality.NORMAL),
                              ("breach_blocks", Reality.BREACH)):
             for values in data.get(key, []):
                 block = Block(*values, reality=reality)

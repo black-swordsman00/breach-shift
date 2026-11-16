@@ -1,10 +1,12 @@
 """Textured scene dressing fitted to existing level collision dimensions."""
 
 from math import cos, pi, sin
+import json
 
 from panda3d.core import BitMask32, Fog, TextureStage
 
 from breach_shift.art.primitives import box, cylinder, flatten_local, part, rod, sphere
+from breach_shift.art import library
 
 
 STONE = (.39, .43, .46, 1)
@@ -23,7 +25,35 @@ PALETTES = {
 }
 
 
-def dress_block(node, block, number):
+def production_environment(level):
+    if level.number != 1:
+        return None
+    relative = "environments/quarantine_yard.glb"
+    path = library.MODEL_ROOT / relative
+    if not path.is_file():
+        return None
+    contract = json.loads(path.with_suffix(".json").read_text(encoding="utf-8"))
+    bounds = level.bounds
+    expected_bounds = [bounds.min_x, bounds.max_x, bounds.min_y, bounds.max_y]
+    blocks = [[b.x, b.y, b.width, b.depth, b.height] for b in level.blocks if b.reality is None]
+    if contract["bounds"] != expected_bounds or contract["blocks"] != blocks:
+        return None
+    return relative
+
+
+def dress_block(node, block, number, *, production=False):
+    if production and block.reality is None:
+        return
+    if production:
+        metadata = library.MODEL_ROOT / "environments/quarantine_yard.json"
+        contract = json.loads(metadata.read_text(encoding="utf-8"))
+        geometry = [block.x, block.y, block.width, block.depth, block.height]
+        for entry in contract["phase_blocks"]:
+            if entry["geometry"] == geometry and entry["reality"] == block.reality.value:
+                model = library.instantiate("environments/" + entry["file"])
+                model.reparentTo(node)
+                model.setColorScale((.82, 1, .95, 1) if block.reality.value == "Normal" else (1, .62, .9, 1))
+                return
     w, d, h = block.width, block.depth, block.height
     if block.reality is not None:
         color = (.22, .48, .52, 1) if block.reality.value == "Normal" else (.48, .15, .65, 1)
@@ -75,6 +105,11 @@ def _tower(parent, x, y, radius=3.4, height=12, clock=False):
 
 def build_environment(parent, level):
     root = parent.attachNewNode("environment-art")
+    asset = production_environment(level)
+    if asset:
+        library.instantiate(asset).reparentTo(root)
+        root.setTag("production-environment", "polyhaven+polypizza")
+        return root, PALETTES[level.number][1]
     bounds = level.bounds
     ground_color, background = PALETTES[level.number]
     floor = part(root, "textured-ground", box(), ((bounds.min_x + bounds.max_x) / 2,
@@ -108,8 +143,8 @@ def build_environment(parent, level):
 def apply_atmosphere(render, breach, number):
     background = PALETTES[number][1]
     fog = Fog("breach-atmosphere" if breach else "environment-atmosphere")
-    color = (.075, .045, .11) if breach else background
+    color = (.13, .09, .18) if breach else ((.24,.29,.32) if number==1 else background)
     from breach_shift.art.color import atmosphere_input
     fog.setColor(*atmosphere_input(color))
-    fog.setExpDensity(.008 if number == 1 else .011)
+    fog.setExpDensity(.0035 if number == 1 else .008)
     render.setFog(fog)

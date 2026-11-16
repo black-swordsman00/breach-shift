@@ -1,13 +1,18 @@
 """Small original image-based lighting maps for readable PBR silhouettes."""
 from functools import lru_cache
 from math import sqrt
+from pathlib import Path
 
 from panda3d.core import PNMImage, Texture
 
 
-@lru_cache(maxsize=2)
+@lru_cache(maxsize=3)
 def environment_map(profile="night"):
     from simplepbr.envmap import EnvMap
+
+    if profile == "courtyard":
+        path = Path(__file__).resolve().parents[1] / "data/lighting/courtyard.env"
+        return EnvMap.from_file_path(str(path))
 
     size = 32
     cube = Texture("breach-shift-" + profile + "-reflections")

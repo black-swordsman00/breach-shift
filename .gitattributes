@@ -6,6 +6,7 @@ assets/source/makehuman/*.obj text eol=lf
 assets/source/makehuman/*.target text eol=lf
 *.blend binary
 *.glb binary
+*.env binary
 *.bam binary
 *.bam.pz binary
 *.png binary
