@@ -1,0 +1,7 @@
+{
+  "kind": "stalker", "name": "The Watcher", "height": 1.8,
+  "age": "young", "sex": "male", "physique": "minmuscle-minweight",
+  "skin": [0.27, 0.29, 0.31], "jacket": [0.025, 0.038, 0.05],
+  "trousers": [0.030, 0.039, 0.050], "accent": [0.13, 0.16, 0.18],
+  "style": "stalker", "mouth": 0.2, "hunch": 14, "seed": 88
+}
