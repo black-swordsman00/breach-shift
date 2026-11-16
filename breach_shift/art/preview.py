@@ -39,7 +39,9 @@ def main() -> None:
 
         game = ShowBase(windowType="offscreen")
         import simplepbr
-        simplepbr.init(enable_shadows=False, use_normal_maps=True, msaa_samples=2)
+        from breach_shift.art.lighting import environment_map
+        simplepbr.init(enable_shadows=False, use_normal_maps=True, msaa_samples=2,
+                       env_map=environment_map("studio"))
         game.disableMouse()
         from breach_shift.art.color import atmosphere_input
         game.setBackgroundColor(*atmosphere_input((.035, .045, .06)))

@@ -46,6 +46,8 @@ class ModelTests(unittest.TestCase):
         for kind in WEAPON_ORDER:
             model = make_weapon_model(kind)
             model.reparentTo(parent)
+            self.assertEqual(model.getTag("source"), "blender")
+            self.assertGreater(model.findAllTextures().getNumTextures(), 1)
             self.assertGreater(model.findAllMatches("**/+GeomNode").getNumPaths(), 0)
             low, high = model.getTightBounds()
             lengths.append(round(high.y - low.y, 2))

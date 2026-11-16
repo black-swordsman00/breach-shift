@@ -6,6 +6,7 @@
 | [concepts/environments](./concepts/environments) | Environment-design proposals for visual review. |
 | [references/environments](./references/environments) | User-supplied environment inspiration. |
 | [blender/characters](./blender/characters) | Ten editable character scenes with packed textures and review lighting. |
+| [blender/weapons](./blender/weapons) | Four editable hard-surface weapon scenes with packed materials. |
 | [designs/characters](./designs/characters) | Individual character proportions, colors and costume styles. |
 | [Runtime characters](../breach_shift/data/models/characters) | Packaged runtime zombie models, including the female Runner. |
 | [Runtime weapons](../breach_shift/data/models/weapons) | Packaged weapon models used by the first-person view. |

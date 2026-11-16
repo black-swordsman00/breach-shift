@@ -114,6 +114,9 @@ or capture the real renderer:
 ```
 
 [Actual engine previews](./assets/previews/README.md) show the current game and models.
+The [local review gallery](./assets/previews/gallery.html) includes Blender
+portraits, statistics, sounds and editable source links.
+See [the Blender workflow](./docs/blender-workshop.md) to edit or rebuild them.
 
 Gameplay runs offline and uses no external services or runtime network access.
 Generated concept images are design references. Character sources are editable
