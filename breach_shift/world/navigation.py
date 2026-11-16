@@ -13,16 +13,20 @@ class NavigationGrid:
     """Find ground routes around the active reality's blockout geometry."""
 
     def __init__(self, blocks: tuple[Block, ...], reality: Reality,
-                 bounds: MapBounds = MapBounds(), cell_size: float = 0.5) -> None:
-        if cell_size <= 0:
-            raise ValueError("Navigation cell size must be positive.")
+                 bounds: MapBounds = MapBounds(), cell_size: float = 0.5, *, clearance: float = .55) -> None:
+        if cell_size <= 0 or clearance <= 0:
+            raise ValueError("Navigation cell size and clearance must be positive.")
         self.bounds = bounds
         self.cell_size = cell_size
+        self.reality = reality
+        self.clearance = clearance
+        self.margin = max(.7,clearance+.1)
+        self._wider_grids = {}
         self.blocks = tuple(block for block in blocks if block.active(reality))
         self.free = {
             (x, y)
-            for x in range(ceil((bounds.min_x + 0.7) / cell_size), floor((bounds.max_x - 0.7) / cell_size) + 1)
-            for y in range(ceil((bounds.min_y + 0.7) / cell_size), floor((bounds.max_y - 0.7) / cell_size) + 1)
+            for x in range(ceil((bounds.min_x + self.margin) / cell_size), floor((bounds.max_x - self.margin) / cell_size) + 1)
+            for y in range(ceil((bounds.min_y + self.margin) / cell_size), floor((bounds.max_y - self.margin) / cell_size) + 1)
             if self.is_free(x * cell_size, y * cell_size)
         }
         self.components: dict[Cell, int] = {}
@@ -41,8 +45,16 @@ class NavigationGrid:
                         pending.append(neighbor)
 
     def is_free(self, x: float, y: float) -> bool:
-        return (self.bounds.contains(x, y, margin=0.7)
-                and not any(block.overlaps_xy(x, y, 0.55) for block in self.blocks))
+        return (self.bounds.contains(x, y, margin=self.margin)
+                and not any(block.overlaps_xy(x, y, self.clearance) for block in self.blocks))
+
+    def for_clearance(self, radius):
+        if radius <= self.clearance:
+            return self
+        if radius not in self._wider_grids:
+            self._wider_grids[radius]=NavigationGrid(self.blocks,self.reality,self.bounds,
+                                                    self.cell_size,clearance=radius)
+        return self._wider_grids[radius]
 
     def _cell(self, point: Position) -> Cell:
         return round(point[0] / self.cell_size), round(point[1] / self.cell_size)
@@ -102,8 +114,8 @@ class NavigationGrid:
         for block in self.blocks:
             interval_start, interval_end = 0.0, 1.0
             for origin, destination, center, extent in (
-                    (start[0], end[0], block.x, block.width / 2 + .55),
-                    (start[1], end[1], block.y, block.depth / 2 + .55)):
+                    (start[0], end[0], block.x, block.width / 2 + self.clearance),
+                    (start[1], end[1], block.y, block.depth / 2 + self.clearance)):
                 low, high = center - extent + 1e-6, center + extent - 1e-6
                 delta = destination - origin
                 if abs(delta) < 1e-9:

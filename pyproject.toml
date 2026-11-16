@@ -28,4 +28,4 @@ breach_shift = ["data/levels/*.json", "data/audio/*.wav",
                 "data/models/weapons/*.glb", "data/models/characters/*.glb",
                 "data/models/weapons/*.json", "data/models/characters/*.json",
                 "data/models/environments/*.glb", "data/models/environments/*.json",
-                "data/lighting/*.env", "data/credits/*.md"]
+                "data/lighting/*.env", "data/lighting/*.png", "data/credits/*.md"]

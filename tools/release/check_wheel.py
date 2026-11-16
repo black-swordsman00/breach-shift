@@ -21,6 +21,7 @@ def check(path):
         root = "breach_shift/data/models/environments/"
         contract = json.loads(archive.read(root+"quarantine_yard.json"))
         required = [root+"quarantine_yard.glb", "breach_shift/data/lighting/courtyard.env",
+                    "breach_shift/data/lighting/courtyard-sky.png",
                     "breach_shift/data/credits/production.md"]
         required += [root+entry["file"] for entry in contract["phase_blocks"]]
         for asset in required:

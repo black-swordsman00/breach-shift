@@ -4,6 +4,7 @@ from math import hypot, pi, sin
 from panda3d.core import BitMask32, CardMaker, CollisionBox, NodePath, Point3, TextNode, Vec3
 
 from breach_shift.art.characters import make_zombie_model
+from breach_shift.art.motion import ZombieMotion
 from breach_shift.world.navigation import NavigationGrid, Position
 from breach_shift.world.reality import Reality
 from breach_shift.combat.target import Target
@@ -52,12 +53,10 @@ class Zombie(Target):
         self.impact_available = False
         self.loot_dropped = False
         self.died_at: float | None = None
-        self.animation_time = 0.0
-        self.previous_visual_position = Point3(position)
-        self.arms = [self.model.find(f"**/arm-{side}") for side in ("left", "right")]
-        self.legs = [self.model.find(f"**/leg-{side}") for side in ("left", "right")]
-        self.arm_rest = [arm.getP() for arm in self.arms]
-        self.leg_rest = [leg.getP() for leg in self.legs]
+        self.attack_started = -100.0
+        self.motion = ZombieMotion(self.root, self.model, height,
+                                   runner=kind is ZombieKind.RUNNER,
+                                   heavy=kind in (ZombieKind.WARDEN, ZombieKind.BRUTE))
         self.health_display = self.root.attachNewNode("enemy-health")
         self.health_display.setZ(height + .14)
         self.health_display.setBillboardPointEye()
@@ -83,26 +82,19 @@ class Zombie(Target):
         self.model.setColorScale(1, 1, 1, 1)
 
     def flash_hit(self) -> None:
-        self.model.setColorScale(1.8, .9, .35, 1)
+        self.model.setColorScale(1.35, .85, .65, 1)
 
     def update_health_display(self) -> None:
         self.health_fill.setSx(self.health / self.max_health)
         self.health_label.setText(f"{self.kind.value.title()} {self.health}/{self.max_health}")
 
     def update_animation(self, dt: float, player: Point3) -> None:
+        self.motion.update(dt, player, self.current_time, windup=self.windup_until,
+                           attack=self.attack_started, dead=self.health <= 0)
         if self.health <= 0:
+            self.health_display.hide()
             return
-        self.animation_time += dt
         position = self.root.getPos()
-        moving = (position - self.previous_visual_position).lengthSquared() > .00001
-        self.previous_visual_position = Point3(position)
-        if hypot(player.x - position.x, player.y - position.y) > .01:
-            self.root.lookAt(player.x, player.y, position.z)
-        swing = sin(self.animation_time * (10 if self.kind is ZombieKind.RUNNER else 6)) * (22 if moving else 2)
-        for index, (arm, leg) in enumerate(zip(self.arms, self.legs)):
-            phase = -1 if index else 1
-            arm.setP(self.arm_rest[index] - swing * phase - (35 if self.windup_until else 8))
-            leg.setP(self.leg_rest[index] + swing * phase)
         distance = hypot(player.x - position.x, player.y - position.y)
         hidden = self.kind is ZombieKind.STALKER and self.current_reality is Reality.NORMAL and distance > 4
         self.health_display.hide() if hidden or distance > 18 else self.health_display.show()
@@ -124,6 +116,12 @@ class Zombie(Target):
             self.last_hit_at = self.current_time
             self.healing_fraction = 0.0
             self.update_health_display()
+            if self.health == 0:
+                # Remove collision immediately, retaining the visible body for
+                # its local death animation and the existing timed cleanup.
+                self.root.unstash()
+                self.collider.stash()
+                self.health_display.hide()
         return accepted
 
     def _move(self, dt: float, now: float, goal: Point3, grid: NavigationGrid) -> None:
@@ -134,7 +132,7 @@ class Zombie(Target):
         elif now >= self.next_route or not self.path:
             self.path = grid.pursuit_path(start, destination)
             self.next_route = now + 0.45
-        speed = self.spec.speed * (1.35 if self.current_reality is Reality.BREACH else 1.0)
+        speed = self.spec.speed * 1.2 * (1.35 if self.current_reality is Reality.BREACH else 1.0)
         remaining = speed * max(0.0, dt)
         while self.path and remaining > 0:
             dx, dy = self.path[0][0] - position.x, self.path[0][1] - position.y
@@ -160,6 +158,12 @@ class Zombie(Target):
         self.set_context(now, reality)
         if self.health <= 0:
             return []
+        grid=grid.for_clearance(self.spec.radius+.1)
+        if not grid.is_free(self.root.getX(),self.root.getY()):
+            x,y=grid.nearest_free((self.root.getX(),self.root.getY()))
+            self.root.setX(x);self.root.setY(y)
+            self.path.clear()
+            self.next_route=0
         actions = []
         position = self.root.getPos()
         distance = hypot(player.x - position.x, player.y - position.y)
@@ -183,6 +187,7 @@ class Zombie(Target):
                 if now >= self.windup_until:
                     if line_clear and distance <= 3.2 and player.z < 0.5:
                         actions.append(ZombieAction("hit", self.spec.damage))
+                        self.attack_started = now
                     self.windup_until = None
                     self.next_attack = now + self.spec.interval
                     self.restore_color()
@@ -211,6 +216,7 @@ class Zombie(Target):
             distance = hypot(player.x - self.root.getX(), player.y - self.root.getY())
             if self.impact_available and line_clear and distance < 1.5 and abs(player.z - self.root.getZ()) < 1.4:
                 actions.append(ZombieAction("hit", self.spec.damage))
+                self.attack_started = now
                 self.impact_available = False
             if now >= self.lunge_until:
                 self.root.setZ(0)
@@ -227,9 +233,11 @@ class Zombie(Target):
         if line_clear and distance <= self.spec.reach and now >= self.next_attack:
             if self.kind is ZombieKind.SPITTER:
                 actions.append(ZombieAction("spit", self.spec.damage))
+                self.attack_started = now
                 self.next_attack = now + self.spec.interval
             elif vertical_gap < 1.4:
                 actions.append(ZombieAction("hit", self.spec.damage))
+                self.attack_started = now
                 self.next_attack = now + self.spec.interval
         if not line_clear or distance > (3.5 if self.kind is ZombieKind.SPITTER else self.spec.reach * 0.8):
             self._move(dt, now, player, grid)

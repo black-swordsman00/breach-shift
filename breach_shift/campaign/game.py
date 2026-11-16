@@ -2,11 +2,10 @@ from dataclasses import dataclass
 from math import hypot
 from random import Random
 
-from direct.gui.OnscreenText import OnscreenText
 from direct.task import Task
 from panda3d.core import (BitMask32, CollisionHandlerQueue, CollisionNode, CollisionPlane,
                          CollisionSegment, CollisionTraverser, GraphicsWindow,
-                         NodePath, Plane, Point3, TextNode, Vec3)
+                         NodePath, Plane, Point3, Vec3)
 
 from breach_shift.campaign.state import CampaignProgress
 from breach_shift.campaign.director import WaveDirector
@@ -25,6 +24,7 @@ from breach_shift.world.reality import Reality, RealityShift
 from breach_shift.combat.target import Target
 from breach_shift.enemies.zombie import Zombie
 from breach_shift.enemies.catalog import ZOMBIE_ORDER, ZombieKind
+from breach_shift.ui.hud import CampaignHUD
 
 
 @dataclass
@@ -55,6 +55,7 @@ class CampaignGame(BreachShift):
         self.reality = RealityShift()
         self.zombies: dict[str, Zombie] = {}
         self.world: CampaignWorld | None = None
+        self.sky = None
         self.projectiles: list[SpitProjectile] = []
         self.pickups: list[AmmoPickup] = []
         self.random = Random()
@@ -65,6 +66,7 @@ class CampaignGame(BreachShift):
         self.trigger_held = False
         self.last_encounter_time = self.clock.getFrameTime()
         self.previous_view_position = Point3(self.player.getPos())
+        self.previous_look = (self.player.getH(),self.camera.getP())
         self.shift_held = False
         self.next_zombie_id = 0
         self.notice = ""
@@ -73,24 +75,15 @@ class CampaignGame(BreachShift):
         self.training_hud.hide()
         self.taskMgr.remove("update-training-hud")
 
-        self.campaign_hud = OnscreenText(text="", parent=self.a2dTopLeft,
-                                        pos=(0.05, -0.1), scale=0.045,
-                                        fg=(1, 1, 1, 1), shadow=(0, 0, 0, 1),
-                                        align=TextNode.ALeft, mayChange=True)
-        self.status_hud = OnscreenText(text="", parent=self.a2dTopRight,
-                                      pos=(-0.05, -0.1), scale=0.045,
-                                      fg=(1, 1, 1, 1), shadow=(0, 0, 0, 1),
-                                      align=TextNode.ARight, mayChange=True)
-        self.notice_hud = OnscreenText(text="", parent=self.aspect2d,
-                                      pos=(0, -0.58), scale=0.035,
-                                      fg=(1, 1, 1, 1), shadow=(0, 0, 0, 1), mayChange=True)
-        notice_node = self.notice_hud.textNode
-        if notice_node is not None:
-            notice_node.setWordwrap(65)
-        self.campaign_controls = OnscreenText(
-            text="1 Pistol | 2 SMG | 3 Rifle | 4 Shotgun\nShift - Change Reality | E - Interact | T - Retry",
-            parent=self.a2dBottomLeft, pos=(0.05, 0.2), scale=0.035,
-            fg=(1, 1, 1, 1), shadow=(0, 0, 0, 1), align=TextNode.ALeft)
+        self.weapon_hud.hide()
+        if hasattr(self,"movement_hud"):
+            self.movement_hud.hide()
+        self.hud = CampaignHUD(self)
+        self.campaign_hud = self.hud.objective
+        self.status_hud = self.hud.status
+        self.notice_hud = self.hud.notice
+        self.campaign_controls = self.hud.controls
+        self.accept("f1",self.hud.toggle_help)
 
         self.query_segment = CollisionSegment()
         node = CollisionNode("campaign-query")
@@ -107,6 +100,15 @@ class CampaignGame(BreachShift):
         self.accept("e", self.interact)
         self.accept("mouse1-up", self.release_trigger)
         self.accept("shift-mouse1-up", self.release_trigger)
+        self.accept("control-shift",self.shift_reality)
+        self.accept("control-shift-up",self.release_shift)
+        for prefix in ("shift-","control-","control-shift-","shift-control-"):
+            self.accept(prefix+"mouse1-up",self.release_trigger)
+            self.accept(prefix+"e",self.interact)
+            self.accept(prefix+"t",self.restart_training)
+            self.accept(prefix+"f1",self.hud.toggle_help)
+            for index,kind in enumerate(WEAPON_ORDER,start=1):
+                self.accept(prefix+str(index),self.select_weapon,[kind])
         for index, kind in enumerate(WEAPON_ORDER, start=1):
             self.accept(str(index), self.select_weapon, [kind])
         for event, callback in (("shift-mouse1", self.shoot), ("shift-r", self.reload_weapon),
@@ -149,6 +151,9 @@ class CampaignGame(BreachShift):
         if self.world is not None:
             self.world.destroy()
             self.world = None
+        if self.sky is not None:
+            self.sky.destroy()
+            self.sky = None
         BreachShift.restart_training(self)
         camera = self.camera
         if camera is not None:
@@ -160,6 +165,7 @@ class CampaignGame(BreachShift):
         level = self.levels[self.progress.level_index]
         self.player.setPos(*level.player_spawn, 0)
         self.previous_view_position = Point3(self.player.getPos())
+        self.previous_look = (self.player.getH(),self.camera.getP())
         bounds = level.bounds
         self.floor.setPos(bounds.min_x, bounds.min_y, -0.2)
         self.floor.setScale(bounds.width, bounds.depth, 0.2)
@@ -172,6 +178,9 @@ class CampaignGame(BreachShift):
                 (Vec3(0, -1, 0), Point3(0, bounds.max_y, 0))):
             boundaries.addSolid(CollisionPlane(Plane(normal, point)))
         self.world = CampaignWorld(self.render, self.load_single_model("models/box"), level)
+        if self.world.environment.hasTag("production-environment") and getattr(self,"render_pipeline",None) is not None:
+            from breach_shift.art.sky import CourtyardSky
+            self.sky = CourtyardSky(self.render)
         pipeline = getattr(self, "render_pipeline", None)
         if pipeline is not None:
             from breach_shift.art.lighting import environment_map
@@ -206,11 +215,14 @@ class CampaignGame(BreachShift):
         self.setBackgroundColor(atmosphere_input(background))
         world.environment.setColorScale((.72, .62, .92, 1) if breach else (1, 1, 1, 1))
         apply_atmosphere(self.render, breach, world.level.number)
+        if self.sky is not None:
+            self.sky.update(self.player.getPos(),breach)
         grid = world.grids[self.reality.state]
         for zombie in self.zombies.values():
             zombie.set_context(self.clock.getFrameTime(), self.reality.state)
-            if zombie.health > 0 and not grid.is_free(zombie.root.getX(), zombie.root.getY()):
-                x, y = grid.nearest_free((zombie.root.getX(), zombie.root.getY()))
+            safe_grid=grid.for_clearance(zombie.spec.radius+.1)
+            if zombie.health > 0 and not safe_grid.is_free(zombie.root.getX(), zombie.root.getY()):
+                x, y = safe_grid.nearest_free((zombie.root.getX(), zombie.root.getY()))
                 zombie.root.setPos(x, y, 0)
                 zombie.lunge_until = None
 
@@ -294,6 +306,7 @@ class CampaignGame(BreachShift):
         grid = world.grids[self.reality.state]
         for zombie in list(self.zombies.values()):
             if zombie.health <= 0:
+                zombie.update_animation(dt, player)
                 if zombie.died_at is not None and now - zombie.died_at >= 10:
                     zombie.model.removeNode()
                     zombie.root.removeNode()
@@ -327,7 +340,15 @@ class CampaignGame(BreachShift):
         self.update_pickups(elapsed)
         moving = (player - self.previous_view_position).lengthSquared() > .0001
         self.previous_view_position = Point3(player)
-        self.weapon_view.update(dt, moving)
+        heading,pitch=self.player.getH(),self.camera.getP()
+        turn=((heading-self.previous_look[0]+180)%360-180,pitch-self.previous_look[1])
+        self.previous_look=(heading,pitch)
+        stance=getattr(self,"stance",None)
+        self.weapon_view.update(dt, moving, now=now,
+                                crouching=bool(stance and stance.is_crouching),turn=turn,
+                                vertical_speed=self.jump_state.vertical_speed)
+        if self.sky is not None:
+            self.sky.update(self.player.getPos(),self.reality.state is Reality.BREACH)
         return Task.cont
 
     def spawn_reinforcements(self, count: int) -> None:
@@ -416,6 +437,7 @@ class CampaignGame(BreachShift):
         if self.campaign_ready:
             if not self.can_act():
                 self.shift_held = False
+                self.crouch_inputs.clear()
             if not self.player_health.is_alive or self.progress.complete:
                 return Task.cont
         return super().update_movement(task)
@@ -451,6 +473,20 @@ class CampaignGame(BreachShift):
         super().on_weapon_fired()
         if self.campaign_ready:
             self.weapon_view.fire(self.weapon.damage)
+
+    def on_reload_started(self):
+        if self.campaign_ready:
+            self.weapon_view.start_reload(self.weapon.reload_time,self.clock.getFrameTime())
+
+    def on_reload_finished(self):
+        if self.campaign_ready:
+            self.weapon_view.finish_reload()
+
+    def update_weapon_hud(self):
+        if self.campaign_ready and hasattr(self,"hud"):
+            self.hud.set_weapon(self.weapon,self.arsenal.selected,self.weapon_view.reload_progress)
+        else:
+            super().update_weapon_hud()
 
     def on_targets_cleared(self):
         # Campaign statistics remain live while the uncollected core can spawn waves.
@@ -504,8 +540,7 @@ class CampaignGame(BreachShift):
             self.world.set_exit_ready(ready)
         core = "Recovered" if self.progress.core_collected else f"Breach | {self.navigation_hint(level.core)}"
         exit_hint = f"{'E - Enter' if ready else 'Locked'} | {self.navigation_hint(level.exit)}"
-        text = (f"Map {level.number}/{len(self.levels)}: {level.name}\n"
-                f"New zombie: {level.introduced.value.title()}\nZombies remaining: {remaining}\n"
+        text = (f"Zombies remaining: {remaining}\n"
                 f"Core: {core}\nExit: {exit_hint}\n"
                 + ("Reinforcements: sealed" if self.director.sealed
                    else f"Wave {self.director.wave + 1} in {self.director.remaining:.0f}s"))
@@ -514,14 +549,7 @@ class CampaignGame(BreachShift):
         elif not self.player_health.is_alive:
             text = f"You died.\nMap {level.number}: {level.name}\nT - Retry this map"
         self.campaign_hud.setText(text)
-        cooldown = self.reality.remaining(self.clock.getFrameTime())
-        shift = f"{cooldown:.1f}s" if cooldown else "Ready"
-        self.status_hud.setText(
-            f"HP: {self.player_health.current}/{self.player_health.maximum}\n"
-            f"Reality: {self.reality.state.value}\nShift: {shift}\n"
-            f"Shots: {self.training_session.shots} | Hits: {self.training_session.hits}\n"
-            f"Accuracy: {self.training_session.accuracy:.1f}%")
-        self.status_hud.setFg((1, 0.3, 0.3, 1) if self.player_health.current <= 25 else (1, 1, 1, 1))
+        self.hud.update(self)
         self.notice_hud.setText(self.notice if self.clock.getFrameTime() < self.notice_until else "")
         return Task.cont
 

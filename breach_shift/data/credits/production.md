@@ -40,3 +40,12 @@ License text: [Creative Commons CC0 1.0 Universal](https://creativecommons.org/p
 The car is an environment prop; weapon and zombie triangle budgets do not apply
 to it. Rodin is reserved for original weapons and characters and is not a source
 for this courtyard.
+
+## Supplied boss and retained character work
+
+The [supplied Warden](./models/characters/warden.glb) has separate provenance
+from the CC0 environment materials and props. It is a user-supplied PBR sculpt,
+locally optimized and rigged without a new generation. No CC0 license is claimed
+for this supplied model. The eight retained authored character designs keep
+their MakeHuman/Breach Shift attribution and now use local skinned GLBs.
+See [the Warden and motion handoff](../docs/warden-and-motion.md).

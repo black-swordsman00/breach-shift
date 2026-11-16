@@ -1,6 +1,6 @@
 from dataclasses import replace
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from panda3d.core import Camera, ClockObject, GraphicsWindow, KeyboardButton, NodePath, Point3
 
@@ -57,8 +57,7 @@ class CampaignIntegrationTests(unittest.TestCase):
         game.weapon_hud = MagicMock()
         game.target_hud = MagicMock()
         game.training_hud = MagicMock()
-        with patch("breach_shift.campaign.game.OnscreenText"):
-            game.setup_campaign()
+        game.setup_campaign()
         self.campaign_hud = MagicMock()
         game.campaign_hud = self.campaign_hud
         self.level = game.levels[0]
@@ -91,6 +90,56 @@ class CampaignIntegrationTests(unittest.TestCase):
         game.shift_reality()
         self.assertIs(game.reality.state, Reality.NORMAL)
 
+    def test_crouch_avoids_a_high_projectile_and_keeps_low_shots_dangerous(self):
+        game=self.game
+        x,y=self.level.player_spawn
+        game.press_crouch('control')
+        game.update_movement(None)
+        game.spawn_projectile(Point3(x,y+2,1.16),Point3(x,y,1.16),10)
+        game.update_projectiles(.3)
+        self.assertEqual(game.player_health.current,100)
+        game.clear_projectiles()
+        game.spawn_projectile(Point3(x,y+2,.55),Point3(x,y,.55),10)
+        game.update_projectiles(.3)
+        self.assertEqual(game.player_health.current,90)
+
+    def test_reload_moves_support_hand_and_weapon_without_granting_ammo_early(self):
+        game=self.game
+        game.select_weapon(WeaponKind.RIFLE)
+        game.shoot()
+        remaining=game.weapon.ammo
+        game.reload_weapon()
+        started=game.weapon_view.reload_started
+        self.tick(.2)
+        game.reload_weapon()
+        self.assertEqual(game.weapon_view.reload_started,started)
+        self.tick(game.weapon.reload_time*.4)
+        game.update_targets(None)
+        self.assertGreater(game.weapon_view.reload_progress,.3)
+        self.assertGreater(abs(game.weapon_view.root.getR()),10)
+        self.assertGreater(game.weapon_view.hands['left'].getPos().length(),.05)
+        self.assertEqual(game.weapon.ammo,remaining)
+        self.assertFalse(game.weapon.try_fire(game.clock.getFrameTime()))
+        game.finish_weapon_reload(None)
+        self.assertEqual(game.weapon.ammo,game.weapon.magazine_size)
+        self.assertIsNone(game.weapon_view.reload_started)
+        self.assertEqual(game.weapon_view.hands['left'].getPos(),Point3(0,0,0))
+
+    def test_slot_switch_and_retry_cancel_reload_pose_and_pending_ammo(self):
+        game=self.game
+        game.shoot()
+        game.reload_weapon()
+        pistol=game.weapon
+        game.select_weapon(WeaponKind.SHOTGUN)
+        self.assertFalse(pistol.is_reloading)
+        self.assertEqual(pistol.ammo,11)
+        self.assertIsNone(game.weapon_view.reload_started)
+        game.shoot()
+        game.reload_weapon()
+        game.restart_training()
+        self.assertIsNone(game.weapon_view.reload_started)
+        self.assertEqual(game.weapon_view.hands['left'].getPos(),Point3(0,0,0))
+
     def test_unsafe_shift_does_not_consume_cooldown(self):
         game = self.game
         game.shift_reality()
@@ -122,7 +171,10 @@ class CampaignIntegrationTests(unittest.TestCase):
             self.tick(0.3)
             game.shoot()
         self.assertEqual(zombie.health, 0)
-        self.assertTrue(zombie.root.isStashed())
+        self.assertFalse(zombie.root.isStashed())
+        self.assertTrue(zombie.collider.isStashed())
+        self.assertIsNone(game.query_collision(zombie.root.getPos()+Point3(0,-1,1),
+                                              zombie.root.getPos()+Point3(0,1,1)))
         self.assertEqual(game.enemies_remaining, self.initial_enemies - 1)
         self.assertTrue(game.hitmarker.isHidden() is False)
 
