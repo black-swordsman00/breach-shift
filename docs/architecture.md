@@ -25,6 +25,26 @@ contains the working training arena and its input/HUD implementation; this
 reorganization keeps that behavior while giving each subsystem a clear home.
 Further extraction can follow concrete feature needs.
 
+## Player movement against architecture
+
+[The player body guard](../breach_shift/player/collision.py) sweeps a full
+1.8-metre standing or 1.15-metre crouching body against active box colliders.
+It stops feet at roofs, heads at ceilings and horizontal motion at side faces,
+then permits sliding along walls. The old torso sphere alone could pass above
+a crate while the player's legs entered its side. Roof support now considers
+the player's footprint rather than only the centre ray.
+
+Panda3D still handles boundary planes, moving enemies and the ground ray.
+The body guard also constrains displacement caused by the pusher. Stashed
+targets and inactive reality blocks are excluded through the active scene
+graph. A ceiling impact stops ascent without resetting airborne jumps.
+
+This guard uses world-aligned box bounds; rotated architecture is conservative.
+It is not a general imported-mesh or stair controller. New environment assets
+need matching collision geometry, and multilevel maps need navigation work.
+Regression tests cover crate sides near roof height, edge support, ceilings,
+fast movement and falls onto playable blocks on all ten maps in both realities.
+
 ## Data and assets
 
 [Campaign JSON](../breach_shift/data/levels) ships inside the package.

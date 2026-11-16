@@ -197,6 +197,47 @@ class JumpIntegrationTests(unittest.TestCase):
         self.step(3)
         self.assertAlmostEqual(game.player.getZ(), 2.0)
 
+    def test_airborne_feet_cannot_enter_a_crate_below_its_roof(self):
+        game = self.game
+        # The old torso sphere is entirely above the two-metre crate here.
+        game.player.setPos(-1.45, 6, 1.6)
+        game.jump_state.leave_ground()
+        self.keyboard.isButtonDown.side_effect = (
+            lambda key: key == KeyboardButton.asciiKey("d"))
+        self.step(4)
+        self.assertLessEqual(game.player.getX(), -1.399)
+        self.assertFalse(game.jump_state.is_grounded)
+
+    def test_edge_of_player_footprint_stays_supported_on_crate(self):
+        game = self.game
+        game.player.setPos(-1.2, 6, 2)
+        self.step(5)
+        self.assertAlmostEqual(game.player.getZ(), 2.0)
+        self.assertTrue(game.jump_state.is_grounded)
+
+    def test_jump_stops_at_ceiling_without_restoring_airborne_jumps(self):
+        game = self.game
+        ceiling = CollisionNode("jump-ceiling")
+        ceiling.setFromCollideMask(BitMask32.allOff())
+        ceiling.setIntoCollideMask(BitMask32.bit(1))
+        ceiling.addSolid(CollisionBox(Point3(-2, -4, 2), Point3(2, 0, 2.25)))
+        game.render.attachNewNode(ceiling)
+        game.jump_player()
+        self.step()
+        self.assertAlmostEqual(game.player.getZ(), .2, places=5)
+        self.assertEqual(game.jump_state.vertical_speed, 0)
+        self.assertFalse(game.jump_state.is_grounded)
+        self.assertEqual(game.jump_state.jumps_used, 1)
+
+    def test_fast_movement_cannot_skip_crate_side(self):
+        game = self.game
+        game.player.setPos(-3, 6, 0)
+        game.move_speed = 100
+        self.keyboard.isButtonDown.side_effect = (
+            lambda key: key == KeyboardButton.asciiKey("d"))
+        self.step()
+        self.assertLessEqual(game.player.getX(), -1.399)
+
     def test_walking_off_a_target_starts_falling_to_the_floor(self):
         game = self.game
         game.player.setPos(0, 6, 2.0)

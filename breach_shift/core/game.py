@@ -1,5 +1,6 @@
 from breach_shift.combat.target import Target
 from breach_shift.player.jump import PlayerJump
+from breach_shift.player.collision import collect_obstacles, has_support, resolve_motion
 from breach_shift.player.stance import PlayerStance
 from breach_shift.training.session import TrainingSession
 from breach_shift.combat.weapon import Weapon
@@ -272,6 +273,7 @@ class BreachShift(ShowBase):
 
     def update_movement(self, task):
         dt = min(self.clock.getDt(), 0.05)
+        self.movement_start = Point3(self.player.getPos(self.render))
         self.previous_player_z = self.player.getZ()
         self.player.setZ(self.previous_player_z + self.jump_state.update(dt))
 
@@ -477,7 +479,21 @@ class BreachShift(ShowBase):
         )
 
     def update_collisions(self, task):
+        self.body_obstacles = collect_obstacles(self.render)
+        start = getattr(self, "movement_start", self.player.getPos(self.render))
+        position, hit_ceiling = resolve_motion(
+            start, self.player.getPos(self.render), self.stance.height,
+            self.body_obstacles)
+        self.player.setPos(self.render, position)
+        if hit_ceiling:
+            self.jump_state.vertical_speed = min(0, self.jump_state.vertical_speed)
         self.collision_traverser.traverse(self.render)
+        # An enemy's pusher response must not shove the body into architecture.
+        position, _ = resolve_motion(
+            position, self.player.getPos(self.render), self.stance.height,
+            self.body_obstacles)
+        self.player.setPos(self.render, position)
+        self.movement_start = Point3(self.player.getPos(self.render))
         self.update_grounding()
         return Task.cont
 
@@ -505,6 +521,10 @@ class BreachShift(ShowBase):
 
     def update_grounding(self):
         if self.jump_state.vertical_speed > 0:
+            return
+
+        if has_support(self.player.getPos(self.render), self.body_obstacles):
+            self.jump_state.land()
             return
 
         current_z = self.player.getZ()
