@@ -80,11 +80,24 @@ def material(name, color, category="fabric", roughness=.83, metallic=0):
     links.new(tex.outputs["Color"], tint.inputs[1])
     links.new(tint.outputs[0], shader.inputs["Base Color"])
     if category in ("skin", "fabric", "leather"):
-        bump = nodes.new("ShaderNodeBump")
-        bump.inputs["Strength"].default_value = .24
-        bump.inputs["Distance"].default_value = .001 if category == "skin" else .0006
-        links.new(tex.outputs["Color"], bump.inputs["Height"])
-        links.new(bump.outputs["Normal"], shader.inputs["Normal"])
+        normal_image = bpy.data.images.get("BS_" + category + "_tangent_normal")
+        if normal_image is None:
+            normal_image = bpy.data.images.new("BS_" + category + "_tangent_normal", width=512, height=512)
+            normal_image.colorspace_settings.name = "Non-Color"
+            height = np.asarray(tex.image.pixels[:], dtype=np.float32).reshape((512, 512, 4))[:, :, 0]
+            dy, dx = np.gradient(height)
+            vectors = np.stack((-dx * .7, -dy * .7, np.ones_like(dx)), axis=2)
+            vectors /= np.linalg.norm(vectors, axis=2)[:, :, None]
+            rgba = np.ones((512, 512, 4), dtype=np.float32)
+            rgba[:, :, :3] = vectors * .5 + .5
+            normal_image.pixels.foreach_set(rgba.ravel())
+            normal_image.pack()
+        normal_tex = nodes.new("ShaderNodeTexImage")
+        normal_tex.image = normal_image
+        normal = nodes.new("ShaderNodeNormalMap")
+        normal.inputs["Strength"].default_value = .5
+        links.new(normal_tex.outputs["Color"], normal.inputs["Color"])
+        links.new(normal.outputs["Normal"], shader.inputs["Normal"])
     # glTF exports a direct image multiplied by the material base-color factor.
     # Use image pixels tinted on disk so the exact color also survives export.
     tinted = tex.image.copy()
