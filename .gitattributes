@@ -1,0 +1,12 @@
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.gltf text eol=lf
+assets/source/makehuman/*.obj text eol=lf
+assets/source/makehuman/*.target text eol=lf
+*.blend binary
+*.glb binary
+*.bam binary
+*.bam.pz binary
+*.png binary
+*.wav binary
