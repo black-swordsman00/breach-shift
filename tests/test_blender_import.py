@@ -10,6 +10,20 @@ from breach_shift.art.blender_import import import_workshop
 
 
 class BlenderImportTests(unittest.TestCase):
+    def test_compressed_embedded_asset_loads_through_the_runtime_library(self):
+        from breach_shift.art import library
+
+        fixture = Path(__file__).resolve().parent / "fixtures/workshop.gltf"
+        with TemporaryDirectory() as directory:
+            output = Path(directory) / "models"
+            result = import_workshop(fixture, output, compress=True)
+            self.assertEqual(result[0]["file"], "characters/walker.bam.pz")
+            self.assertFalse((output / "characters/walker.bam").exists())
+            with patch.object(library, "MODEL_ROOT", output):
+                model = library.instantiate("characters/walker.bam", lambda: self.fail("Primitive fallback used"))
+            self.assertEqual(model.getTag("source"), "blender")
+            self.assertGreater(model.findAllTextures().getNumTextures(), 0)
+            model.removeNode()
     def test_import_preserves_pivots_and_embeds_textures_without_needing_the_glb(self):
         original = Path(__file__).resolve().parent / "fixtures/workshop.gltf"
         with TemporaryDirectory() as directory:

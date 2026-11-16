@@ -19,5 +19,8 @@ def _load(path: str) -> NodePath:
 
 def instantiate(relative_path: str, source) -> NodePath:
     path = MODEL_ROOT / relative_path
+    compressed = path.with_name(path.name + ".pz")
+    if compressed.is_file():
+        path = compressed
     template = _load(str(path)) if path.is_file() else source()
     return template.copyTo(NodePath("model-staging"))
