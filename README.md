@@ -121,6 +121,8 @@ See [the Blender workflow](./docs/blender-workshop.md) to edit or rebuild them.
 
 See [the production asset workflow](./docs/production-assets.md) for the first
 modular courtyard, licenses, GLB export checks and the Rodin weapon handoff.
+The first [Rodin rifle and skinned Walker](./docs/rodin-models.md) now run in-game;
+their detailed sources are retained for local refinement.
 
 Gameplay runs offline and uses no external services or runtime network access.
 Generated concept images are design references. Character sources are editable

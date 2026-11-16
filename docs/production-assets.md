@@ -65,8 +65,9 @@ definitions retain their own geometry.
 
 Request only one unique model at a time through `create_rodin_job`, keep job IDs
 and subscription keys in ignored local storage, poll the job, then import the
-completed result. A usable Rodin account is required. No Rodin-generated weapon
-has been installed in this art pass; the working weapon library remains active.
+completed result. The first rifle and Walker are now installed; see
+[the generated model handoff](./rodin-models.md). The other weapons and zombies
+remain active from the earlier Blender library until individually replaced.
 
 For a completed weapon result, use [the Rodin optimizer](../tools/blender/optimize_rodin.py):
 
@@ -77,10 +78,12 @@ blender --background --factory-startup --python tools/blender/optimize_rodin.py 
 Decimate preserves UV layers and enforces **strictly fewer than 5,000 triangles**.
 It packs PBR images and exports a candidate GLB and sanitized editable scene.
 Review its orientation, grip position, muzzle alignment, textures and silhouette
-before copying it into the packaged weapon folder. The runtime loader prefers a
+before copying it into the packaged weapon folder. Keep the measured muzzle JSON
+alongside the GLB. The runtime loader prefers a
 validated GLB over the matching older BAM. Generated zombies require fewer than
 12,000 triangles **and** the animation pivots/rig expected by the game before
-installation; the weapon optimizer does not invent a zombie rig.
+installation. Use [the character optimizer](../tools/blender/optimize_rodin_character.py)
+to preserve UVs, fit the character budget and bind a local humanoid skeleton.
 
 ## Offline loading and privacy checks
 
@@ -104,5 +107,5 @@ blender --background --factory-startup --disable-autoexec --python-exit-code 1 a
 
 Inspect [actual gameplay](../assets/previews/gameplay.png) separately from
 [the Blender environment render](../assets/previews/quarantine-yard-blender.png).
-The other nine maps and the existing character/weapon roster remain the earlier
-art pass until their individual replacements are ready and verified.
+The other nine maps, three weapons and nine zombies remain the earlier art pass
+until their individual replacements are ready and verified.

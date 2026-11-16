@@ -4,8 +4,9 @@ Blender 4.5 LTS is the authoring tool. The game runs exported models directly;
 players do not need Blender, MakeHuman or network access.
 
 New environments use [the BlenderMCP production workflow](./production-assets.md)
-with Poly Haven and Poly Pizza. Rodin is reserved for future character and main
-weapon replacements. The tools below reproduce the retained earlier art library.
+with Poly Haven and Poly Pizza. The first Rodin rifle and skinned Walker are
+documented in [the model handoff](./rodin-models.md). The tools below reproduce
+the retained earlier art library and skip migrated kinds to preserve their sources.
 
 ## Editable sources and reproduction
 

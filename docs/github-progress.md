@@ -37,12 +37,23 @@ cleanup, licensed Poly Pizza props, Poly Haven architecture, Panda3D GLB/HDRI
 integration, UV-preserving Rodin weapon optimization, Blender privacy checks,
 and the documented visual handoff. Each milestone is pushed separately.
 
-After this pass, the branch contains **53 history entries since the baseline**,
-with **7 commits ahead of the current default-branch baseline**. These pending
+At the courtyard-only handoff (`c343368`), the branch contained **53 history entries since the baseline**,
+with **7 commits ahead of its default-branch baseline**. Those pending
 commits are not a claim that GitHub has credited 53 profile contributions.
 No empty commits, duplicate PRs or rewritten history are used to reach the goal.
 
-Validation includes 164 game/asset tests, real Blender and Panda3D previews, a
+The initial validation included 164 game/asset tests, real Blender and Panda3D previews, a
 standalone wheel smoke check, and a privacy scan of both new source artifacts
 and all packaged content. The Rodin optimizer is checked with a synthetic UV
-fixture; no generated weapon is claimed as delivered in this pass.
+fixture; no generated weapon was included in that initial courtyard-only handoff.
+
+## Rodin follow-up
+
+The same PR now adds the first generated rifle and Walker, source-preserving
+optimization and baking, local skeletal binding, measured muzzle placement,
+correct first-person depth, mixed-library packaging and regression tests.
+These are development milestones; new pushes remain synchronization operations.
+Use the commands above for the current branch count rather than treating the
+earlier snapshot or pending commits as a credited contribution graph total.
+The follow-up passes 169 tests, including real rendered weapon occlusion and
+independent skinned-vertex deformation, plus the mixed-library export and wheel checks.
