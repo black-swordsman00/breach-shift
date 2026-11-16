@@ -76,6 +76,7 @@ See [combat balance](./docs/combat.md) for HP, weapons, loot and reinforcement r
 | E | Collect the power core or enter an unlocked exit |
 | T | Retry the current map; restart after completing the campaign |
 | Escape | Exit |
+| M | Toggle sound |
 
 In training, T resets the full practice session. On campaign maps, recover the
 core in Breach, defeat every zombie, and return to Normal to reach the exit.
@@ -86,6 +87,13 @@ Each killed zombie drops a random weapon-specific ammunition box. Walk close
 to collect it. Reinforcements begin after 30 active seconds and grow larger and
 more frequent. Recovering the core seals reinforcements so the remaining
 enemies can be cleared and the exit reached.
+
+Weapons have distinct firing sounds plus reload and empty-magazine effects.
+Zombies growl, react to hits and death, and announce attacks; their voices are
+positioned in 3D and become quieter with distance. See [audio](./docs/audio.md).
+
+Enemies pursue the player directly over clear ground, route around cover, and
+approach the nearest reachable side of a sealed barrier while waiting for Shift.
 
 ## Validation
 
