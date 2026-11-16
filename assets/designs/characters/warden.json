@@ -1,0 +1,7 @@
+{
+  "kind": "warden", "name": "The Breach Warden", "height": 2.6,
+  "age": "young", "sex": "male", "physique": "maxmuscle-maxweight",
+  "skin": [0.26, 0.23, 0.29], "jacket": [0.065, 0.050, 0.075],
+  "trousers": [0.05, 0.045, 0.055], "accent": [0.39, 0.075, 0.47],
+  "style": "boss", "mouth": 0.95, "hunch": 8, "seed": 110
+}
