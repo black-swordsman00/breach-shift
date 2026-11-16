@@ -23,8 +23,9 @@ class ModelTests(unittest.TestCase):
         first = make_zombie_model(ZombieKind.RUNNER)
         second = make_zombie_model(ZombieKind.RUNNER)
         self.assertEqual(first.getTag("design"), "female")
+        original_pitch = second.find("**/arm-left").getP()
         first.find("**/arm-left").setP(45)
-        self.assertEqual(second.find("**/arm-left").getP(), 0)
+        self.assertEqual(second.find("**/arm-left").getP(), original_pitch)
         first.removeNode()
         second.removeNode()
 

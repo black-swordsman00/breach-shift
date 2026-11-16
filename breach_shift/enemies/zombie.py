@@ -56,10 +56,13 @@ class Zombie(Target):
         self.previous_visual_position = Point3(position)
         self.arms = [self.model.find(f"**/arm-{side}") for side in ("left", "right")]
         self.legs = [self.model.find(f"**/leg-{side}") for side in ("left", "right")]
+        self.arm_rest = [arm.getP() for arm in self.arms]
+        self.leg_rest = [leg.getP() for leg in self.legs]
         self.health_display = self.root.attachNewNode("enemy-health")
         self.health_display.setZ(height + .14)
         self.health_display.setBillboardPointEye()
         self.health_display.setLightOff(2)
+        self.health_display.setShaderOff(2)
         background = CardMaker("health-background")
         background.setFrame(-.33, .33, -.01, .065)
         self.health_display.attachNewNode(background.generate()).setColor(.05, .05, .05, 1)
@@ -98,8 +101,8 @@ class Zombie(Target):
         swing = sin(self.animation_time * (10 if self.kind is ZombieKind.RUNNER else 6)) * (22 if moving else 2)
         for index, (arm, leg) in enumerate(zip(self.arms, self.legs)):
             phase = -1 if index else 1
-            arm.setP(-swing * phase - (35 if self.windup_until else 8))
-            leg.setP(swing * phase)
+            arm.setP(self.arm_rest[index] - swing * phase - (35 if self.windup_until else 8))
+            leg.setP(self.leg_rest[index] + swing * phase)
         distance = hypot(player.x - position.x, player.y - position.y)
         hidden = self.kind is ZombieKind.STALKER and self.current_reality is Reality.NORMAL and distance > 4
         self.health_display.hide() if hidden or distance > 18 else self.health_display.show()
