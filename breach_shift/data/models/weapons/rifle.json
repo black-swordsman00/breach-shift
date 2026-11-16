@@ -1,0 +1,33 @@
+{
+  "file": "rifle.glb",
+  "triangles": 4800,
+  "bytes": 3666544,
+  "provider": "Hyper3D Rodin",
+  "source_triangles": 500000,
+  "uv_layers_preserved": true,
+  "forward": "+Y",
+  "up": "+Z",
+  "units": "metres",
+  "texture_transfer": "local Cycles bake",
+  "game_uv": "GameUV",
+  "source_uv_layers_retained": [
+    "UVMap"
+  ],
+  "bounds": [
+    [
+      -0.035144779831171036,
+      -0.2799999713897705,
+      -0.2178894579410553
+    ],
+    [
+      0.035144779831171036,
+      0.6399999856948853,
+      0.09788945317268372
+    ]
+  ],
+  "muzzle": [
+    -0.004252794198691845,
+    0.6399999856948853,
+    0.027908623218536377
+  ]
+}
