@@ -129,6 +129,9 @@ class CampaignGame(BreachShift):
                          and window.getProperties().getForeground())))
 
     def load_level(self):
+        audio = getattr(self, "audio", None)
+        if audio is not None:
+            audio.stop_all()
         self.clear_projectiles()
         self.clear_pickups()
         self.arsenal.reset()
@@ -180,6 +183,7 @@ class CampaignGame(BreachShift):
         zombie = Zombie(self.render, self.load_single_model("models/box"), Point3(x, y, 0),
                         kind, name, self.clock.getFrameTime())
         zombie.set_context(self.clock.getFrameTime(), self.reality.state)
+        zombie.next_voice_at = self.clock.getFrameTime() + self.random.uniform(1, 5)
         self.zombies[name] = zombie
         self.targets[name] = zombie
         return zombie
@@ -289,14 +293,26 @@ class CampaignGame(BreachShift):
                 continue
             origin = zombie.root.getPos() + Vec3(0, 0, 0.9)
             clear = self.query_collision(origin, player + Vec3(0, 0, 0.9)) is None
+            had_windup = zombie.windup_until is not None
             for action in zombie.update_ai(dt, now, player, self.reality.state, grid, clear):
                 if action.kind == "hit":
                     self.damage_player(action.damage)
+                    self.play_sound("zombie_attack", node=zombie.root, volume=.7)
                 elif action.kind == "spit":
                     self.spawn_projectile(origin, player + Vec3(0, 0, 0.9), action.damage)
+                    self.play_sound("zombie_attack", node=zombie.root, volume=.5, pitch=1.25)
                 elif action.kind == "summon" and self.enemies_remaining < self.director.max_alive:
+                    self.play_sound("zombie_howl", node=zombie.root, volume=.85)
                     x, y = grid.nearest_free((zombie.root.getX() + 1, zombie.root.getY()))
                     self.spawn_zombie(ZombieKind.WALKER, x, y)
+            if zombie.windup_until is not None and not had_windup:
+                self.play_sound("zombie_roar" if zombie.kind is ZombieKind.WARDEN else "zombie_attack",
+                                node=zombie.root, volume=.8)
+            if now >= zombie.next_voice_at:
+                if (zombie.root.getPos() - player).length() < 40:
+                    self.play_sound("zombie_idle", node=zombie.root, volume=.5,
+                                    pitch=self.random.uniform(.82, 1.12))
+                zombie.next_voice_at = now + self.random.uniform(3.5, 7)
             zombie.update_animation(dt, player)
         self.update_projectiles(dt)
         self.update_pickups(elapsed)
@@ -340,6 +356,7 @@ class CampaignGame(BreachShift):
             collected = not expired and nearby and self.query_collision(position + Vec3(0, 0, .2), player + Vec3(0, 0, .5)) is None
             if collected:
                 self.arsenal.add_ammo(pickup.reward.kind, pickup.reward.rounds)
+                self.play_sound("ammo_pickup", volume=.4)
                 name = self.arsenal.weapons[pickup.reward.kind].name
                 self.show_notice(f"{name}: +{pickup.reward.rounds} reserve rounds", 2)
                 self.update_weapon_hud()
@@ -408,6 +425,10 @@ class CampaignGame(BreachShift):
     def release_trigger(self):
         self.trigger_held = False
 
+    def toggle_audio(self):
+        super().toggle_audio()
+        self.show_notice("Sound on" if self.audio.enabled else "Sound muted", 2)
+
     def select_weapon(self, kind: WeaponKind):
         if not self.can_act() or kind is self.arsenal.selected:
             return
@@ -418,6 +439,7 @@ class CampaignGame(BreachShift):
         self.update_weapon_hud()
 
     def on_weapon_fired(self):
+        super().on_weapon_fired()
         if self.campaign_ready:
             self.weapon_view.fire(self.weapon.damage)
 
@@ -433,6 +455,9 @@ class CampaignGame(BreachShift):
         if isinstance(target, Zombie):
             target.set_context(self.clock.getFrameTime(), self.reality.state)
         accepted = super().damage_target(target, damage)
+        if accepted and isinstance(target, Zombie):
+            self.play_sound("zombie_death" if target.health == 0 else "zombie_hurt", node=target.root,
+                            volume=.75 if target.health == 0 else .55)
         if accepted and isinstance(target, Zombie) and target.health == 0 and not target.loot_dropped:
             target.loot_dropped = True
             target.died_at = self.clock.getFrameTime()

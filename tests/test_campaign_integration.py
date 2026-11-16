@@ -298,6 +298,19 @@ class CampaignIntegrationTests(unittest.TestCase):
         self.assertEqual(game.weapon.ammo, 11)
         self.game.taskMgr.remove.assert_any_call("reload-weapon")
 
+    def test_firing_and_enemy_damage_trigger_the_matching_audio_events(self):
+        game = self.game
+        game.audio = MagicMock()
+        game.select_weapon(WeaponKind.RIFLE)
+        game.shoot()
+        cues = [call.args[0] for call in game.audio.play.call_args_list]
+        self.assertIn("fire_rifle", cues)
+        zombie = next(zombie for zombie in game.zombies.values() if zombie.health > 0)
+        game.damage_target(zombie, 1)
+        self.assertEqual(game.audio.play.call_args.args[0], "zombie_hurt")
+        game.damage_target(zombie, 1000)
+        self.assertEqual(game.audio.play.call_args.args[0], "zombie_death")
+
     def test_every_weapon_deals_its_damage_and_shotgun_uses_one_shell(self):
         game = self.game
         zombie = game.spawn_zombie(ZombieKind.WARDEN, game.player.getX(), game.player.getY() + 3)

@@ -104,6 +104,8 @@ class BreachShift(ShowBase):
 
         self.camLens.setNear(0.05)
 
+        self.setup_audio()
+
         #Collision setup
         self.setup_collisions()
 
@@ -140,6 +142,26 @@ class BreachShift(ShowBase):
                 raise RuntimeError(f"Failed to load model: {path}")
 
             return model
+
+    def setup_audio(self):
+        from direct.showbase.Audio3DManager import Audio3DManager
+        from breach_shift.audio.bank import SoundBank
+
+        spatial = None
+        if not self.headless and self.sfxManagerList:
+            spatial = Audio3DManager(self.sfxManagerList[0], listener_target=self.camera, root=self.render)
+            spatial.setDistanceFactor(1.0)
+            spatial.setDopplerFactor(.15)
+        self.audio = SoundBank(self.loader, spatial, enabled=not self.headless)
+        self.accept("m", self.toggle_audio)
+
+    def play_sound(self, cue, *, node=None, volume=.75, pitch=1.0):
+        audio = getattr(self, "audio", None)
+        if audio is not None:
+            audio.play(cue, node=node, volume=volume, pitch=pitch, now=self.clock.getFrameTime())
+
+    def toggle_audio(self):
+        self.audio.toggle()
 
     def create_targets(self):
         positions = (
@@ -455,6 +477,8 @@ class BreachShift(ShowBase):
         now = self.clock.getFrameTime()
 
         if not self.weapon.try_fire(now):
+            if self.weapon.ammo <= 0 and not self.weapon.is_reloading:
+                self.play_sound("empty", volume=.4)
             return
 
         self.training_session.record_shot(now)
@@ -483,6 +507,7 @@ class BreachShift(ShowBase):
 
     def on_weapon_fired(self):
         """Allow a game mode to animate a shot after ammunition is consumed."""
+        self.play_sound("fire_" + self.weapon.name.lower())
 
 
 
@@ -498,6 +523,8 @@ class BreachShift(ShowBase):
         if not self.weapon.start_reload():
             return
 
+        self.play_sound("reload_start", volume=.55)
+
         self.update_weapon_hud()
 
         self.taskMgr.doMethodLater(
@@ -507,7 +534,10 @@ class BreachShift(ShowBase):
         )
 
     def finish_weapon_reload(self,task):
+        was_reloading = self.weapon.is_reloading
         self.weapon.finish_reload()
+        if was_reloading:
+            self.play_sound("reload_finish", volume=.6)
         self.update_weapon_hud()
         return Task.done
 
