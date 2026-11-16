@@ -1,6 +1,6 @@
 # GitHub contribution goal
 
-The requested goal is **100 new contributions from 16 November 2026 onward**.
+The requested goal is **more than 100 new contributions from 16 November 2026 onward**.
 The existing contribution graph is not counted toward that target.
 
 The development baseline is commit `515dd99` (65 commits in its history).
@@ -22,10 +22,27 @@ git log --oneline 515dd99..HEAD
 git log --oneline origin/main..HEAD
 ```
 
-The first number is newly authored commits in the current branch history. It
+The first number counts new entries in the branch history, including merges. It
 must not be presented as the number already credited on the GitHub profile.
 Opening small, reviewable PRs accompanies real development milestones; empty
 commits and duplicate PRs are not part of this workflow.
 
 See GitHub's [contribution reference](https://docs.github.com/en/account-and-profile/reference/profile-contributions-reference)
 and [missing-contributions guide](https://docs.github.com/en/account-and-profile/how-tos/contribution-settings/troubleshooting-missing-contributions).
+
+## Production courtyard milestone
+
+The `feat/production-assets` pass adds seven meaningful commits: obsolete-art
+cleanup, licensed Poly Pizza props, Poly Haven architecture, Panda3D GLB/HDRI
+integration, UV-preserving Rodin weapon optimization, Blender privacy checks,
+and the documented visual handoff. Each milestone is pushed separately.
+
+After this pass, the branch contains **53 history entries since the baseline**,
+with **7 commits ahead of the current default-branch baseline**. These pending
+commits are not a claim that GitHub has credited 53 profile contributions.
+No empty commits, duplicate PRs or rewritten history are used to reach the goal.
+
+Validation includes 164 game/asset tests, real Blender and Panda3D previews, a
+standalone wheel smoke check, and a privacy scan of both new source artifacts
+and all packaged content. The Rodin optimizer is checked with a synthetic UV
+fixture; no generated weapon is claimed as delivered in this pass.

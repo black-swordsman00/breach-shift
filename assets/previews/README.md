@@ -9,7 +9,8 @@ The following group views are captured from Panda3D using the actual exported
 Blender models. They show the current anatomical art pass. The gameplay capture places two existing Walkers in view and equips
 the rifle for inspection; it does not change the shipped level definition.
 
-- [Gameplay, weapon, HP bars and fortress scenery](./gameplay.png)
+- [Gameplay with the Poly Haven / Poly Pizza courtyard](./gameplay.png)
+- [Blender render of the production courtyard](./quarantine-yard-blender.png)
 - [All ten zombie models](./zombie-roster.png)
 - [All four weapon models](./weapons.png)
 

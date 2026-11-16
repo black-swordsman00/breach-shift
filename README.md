@@ -4,8 +4,9 @@ An offline Python/Panda3D first-person zombie campaign built around switching
 between **Normal** and **Breach** reality. Ten playable maps introduce ten enemy
 types. The game includes ten articulated Blender zombie models, four visible
 weapon models, ammunition pickups and escalating reinforcements. Levels use
-textured prototype geometry; the first courtyard includes snowy stone cover and
-fortress towers. [Concept art](./assets/concepts) remains the target for later art refinement.
+an upgraded first courtyard with Poly Haven PBR architecture and Poly Pizza
+set dressing; the remaining maps retain prototype scenery.
+[Concept art](./assets/concepts) remains the target for later art refinement.
 
 ## Run the game
 
@@ -118,10 +119,14 @@ The [local review gallery](./assets/previews/gallery.html) includes Blender
 portraits, statistics, sounds and editable source links.
 See [the Blender workflow](./docs/blender-workshop.md) to edit or rebuild them.
 
+See [the production asset workflow](./docs/production-assets.md) for the first
+modular courtyard, licenses, GLB export checks and the Rodin weapon handoff.
+
 Gameplay runs offline and uses no external services or runtime network access.
 Generated concept images are design references. Character sources are editable
 Blender scenes with licensed CC0 anatomy and original costumes, painted decay,
 equipment and mutations. Runtime BAM.PZ models embed their textures and ship in
-the installed package. This is the first anatomical art pass; the detailed concept
+the installed package. Environment GLBs embed their textures and ship with a
+baked Poly Haven HDRI. This is the first anatomical art pass; the detailed concept
 paintings remain the visual target. Full skeletal locomotion and final environment
 art are still future work.

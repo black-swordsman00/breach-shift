@@ -3,6 +3,10 @@
 Blender 4.5 LTS is the authoring tool. The game runs exported models directly;
 players do not need Blender, MakeHuman or network access.
 
+New environments use [the BlenderMCP production workflow](./production-assets.md)
+with Poly Haven and Poly Pizza. Rodin is reserved for future character and main
+weapon replacements. The tools below reproduce the retained earlier art library.
+
 ## Editable sources and reproduction
 
 - `assets/blender/characters/`: ten `.blend` character scenes with packed images.
