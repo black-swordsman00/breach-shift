@@ -57,3 +57,16 @@ Use the commands above for the current branch count rather than treating the
 earlier snapshot or pending commits as a credited contribution graph total.
 The follow-up passes 169 tests, including real rendered weapon occlusion and
 independent skinned-vertex deformation, plus the mixed-library export and wheel checks.
+
+## Supplied Warden and motion milestone
+
+Six meaningful follow-up commits cover export/privacy fixes, the supplied boss
+and ten skinned character assets, crouching/map practice, motion/reload/HUD,
+courtyard refinements, and the verified visual handoff. This brings the branch
+to **65 history entries since the baseline**, including merges, with **19 pending
+commits ahead of its default-branch baseline**. These are history counts rather
+than credited profile-contribution totals. PR #16 remains a draft for review.
+
+Validation now passes 184 tests, full character skin deformation, packed-scene
+checks, and a rendered installed-game check outside the source checkout. The
+follow-up reuses supplied and existing local assets without new cloud generation.

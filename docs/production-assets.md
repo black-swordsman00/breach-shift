@@ -1,7 +1,7 @@
 # Production asset workflow
 
-The first upgraded map is **Quarantine Yard**. The courtyard has 53,020 triangles
-and 13 embedded textures, occupies about 22 MB, and uses metre units, Blender +Y
+The first upgraded map is **Quarantine Yard**. The courtyard has 75,062 triangles
+and 13 embedded textures, occupies about 25 MB, and uses metre units, Blender +Y
 forward / +Z up. The GLB follows standard glTF Y-up encoding; `panda3d-gltf`
 converts it back to Panda3D coordinates. Engine tests verify the resulting bounds.
 The connected Blender 5.3 built this source scene; the retained earlier art
@@ -61,13 +61,13 @@ definition. Shallow debris remains decorative. The map's geometry contract must
 match the loaded level before its GLB replaces the fallback scenery; custom map
 definitions retain their own geometry.
 
-## Rodin weapon handoff
+## Existing Rodin asset handoff
 
-Request only one unique model at a time through `create_rodin_job`, keep job IDs
-and subscription keys in ignored local storage, poll the job, then import the
-completed result. The first rifle and Walker are now installed; see
-[the generated model handoff](./rodin-models.md). The other weapons and zombies
-remain active from the earlier Blender library until individually replaced.
+Paid generation is disabled for the current iteration. Reuse the existing rifle
+and Walker sources and the supplied Warden file; no new provider calls are
+needed. See [the generated model handoff](./rodin-models.md) and
+[the Warden/motion handoff](./warden-and-motion.md). The eight retained authored
+characters now use optimized skinned GLBs; three weapons retain earlier art.
 
 For a completed weapon result, use [the Rodin optimizer](../tools/blender/optimize_rodin.py):
 
@@ -90,7 +90,9 @@ to preserve UVs, fit the character budget and bind a local humanoid skeleton.
 The game uses local packaged assets and performs no runtime downloads. GLB
 validation rejects external resources, custom extras, private filesystem paths,
 invalid buffer lengths and unsupported required extensions. Blender saves strip
-MCP scene settings and embedded scripts; image paths are relative and packed.
+MCP scene settings and embedded scripts; image paths and every packed-image
+source path are relative. The HDRI also has a local visible-sky PNG, while the
+floating-point environment map supplies offline PBR reflections.
 Scene dependencies are saved separately and reopened with a clean factory
 layout, excluding the user's workspace UI and file-browser history. The saved
 file is also scanned after decompression.
@@ -107,5 +109,7 @@ blender --background --factory-startup --disable-autoexec --python-exit-code 1 a
 
 Inspect [actual gameplay](../assets/previews/gameplay.png) separately from
 [the Blender environment render](../assets/previews/quarantine-yard-blender.png).
-The other nine maps, three weapons and nine zombies remain the earlier art pass
-until their individual replacements are ready and verified.
+Industrial facades, shutters, coping, platform ribs and lane markings refine
+the courtyard while retaining its playable collision footprints. The other nine
+maps and three weapons retain their earlier art. The eight earlier character
+designs are locally optimized and fully skinned; they are not new generations.

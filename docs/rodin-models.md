@@ -30,8 +30,10 @@ while nearby world walls do not hide the weapon.
 
 The mixed-library export command prefers reviewed production GLBs and does not
 recreate superseded BAM aliases. Earlier Blender builders skip migrated kinds
-to protect the generated editable sources. Three other weapons and nine other
-zombies remain the retained earlier art pass.
+to protect reviewed editable sources. The supplied Warden replaces the old
+boss, and eight earlier character designs now use locally optimized skinned
+GLBs. Three weapons retain the earlier art. No additional generation was used
+for the Warden/motion iteration; see [its handoff](./warden-and-motion.md).
 
 Generated-model provider references are [Rodin on fal.ai](https://fal.ai/models/fal-ai/hyper3d/rodin/v2.5/text-to-3d)
 and [Hyper3D](https://hyper3d.ai/). The courtyard's CC0 credits apply to its Poly

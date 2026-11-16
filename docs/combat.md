@@ -21,6 +21,12 @@ armor, cloaking, regeneration and Breach rules still apply.
 Nearby enemies have a name and HP bar. A cloaked Stalker also hides its HP
 display. Walking limbs, hit flashes and attack warnings use independent model
 instances, so animating one enemy does not move another.
+Pursuit movement is 20% faster than the original catalog speed, with the
+existing additional 35% Breach multiplier. The supplied Warden is 2.6 m tall
+with a wider collider and navigation clearance. Its 800 HP and 35-damage stomp
+remain the strongest enemy profile. Footstep cycles follow actual distance;
+knees, elbows, hips, spine and head blend their motion independently. Death
+removes collision immediately and leaves a briefly falling visible body.
 
 ## Weapons
 
@@ -37,6 +43,8 @@ The shotgun traces six spreading pellets at 16 damage each, spending one shell.
 Walls block each pellet independently. All weapons have a distinct visible
 model, gloved player arms, recoil and a short muzzle flash. Switching slots
 preserves ammunition and fire cooldown and cancels an unfinished reload.
+The support hand and weapon animate a reload for its exact gameplay duration;
+the HUD shows progress. Ammunition is granted only when the reload completes.
 Each map checkpoint refills every weapon and retains the selected slot.
 
 ## Ammunition drops

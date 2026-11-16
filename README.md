@@ -6,6 +6,8 @@ types. The game includes ten articulated Blender zombie models, four visible
 weapon models, ammunition pickups and escalating reinforcements. Levels use
 an upgraded first courtyard with Poly Haven PBR architecture and Poly Pizza
 set dressing; the remaining maps retain prototype scenery.
+The supplied Warden sculpt is the final boss. All ten zombies now have skinned
+humanoid rigs, a distance-driven gait, attack poses and a short death animation.
 [Concept art](./assets/concepts) remains the target for later art refinement.
 
 ## Run the game
@@ -21,6 +23,12 @@ Start the campaign from the project directory:
 
 ```powershell
 .\.venv\Scripts\python.exe main.py
+```
+
+To practice against the Warden on the final map:
+
+```powershell
+.\.venv\Scripts\python.exe main.py --level 10
 ```
 
 Start the original three-target training arena:
@@ -73,6 +81,8 @@ See [combat balance](./docs/combat.md) for HP, weapons, loot and reinforcement r
 | Left click / R | Shoot / reload |
 | 1 / 2 / 3 / 4 | Pistol / SMG / rifle / shotgun in the campaign |
 | Space | Jump; release and press again for a double jump |
+| C / Ctrl, held | Crouch with a lower camera/collider and slower movement |
+| F1 | Show/hide the campaign controls panel |
 | Shift | Change reality, with a two-second cooldown |
 | E | Collect the power core or enter an unlocked exit |
 | T | Retry the current map; restart after completing the campaign |
@@ -92,6 +102,9 @@ enemies can be cleared and the exit reached.
 Weapons have distinct firing sounds plus reload and empty-magazine effects.
 Zombies growl, react to hits and death, and announce attacks; their voices are
 positioned in 3D and become quieter with distance. See [audio](./docs/audio.md).
+Reloads animate the weapon and support hand using each weapon's real reload
+duration. Movement, breathing, recoil and drawing blend into the first-person
+pose. Cancelling or switching weapons clears the reload pose and pending ammo.
 
 Enemies pursue the player directly over clear ground, route around cover, and
 approach the nearest reachable side of a sealed barrier while waiting for Shift.

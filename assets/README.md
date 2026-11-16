@@ -11,7 +11,7 @@
 | [models/environments](./models/environments) | Courtyard, switching barriers and reusable PBR architecture modules. |
 | [models/props](./models/props) | Six normalized CC0 Poly Pizza props. |
 | [models/weapons](./models/weapons) | Reviewed Rodin rifle GLB with measured muzzle metadata. |
-| [models/characters](./models/characters) | Reviewed skinned Rodin Walker GLB and export metadata. |
+| [models/characters](./models/characters) | Ten optimized, skinned GLBs including the supplied Warden, with measured export metadata. |
 | [designs/characters](./designs/characters) | Individual character proportions, colors and costume styles. |
 | [Runtime characters](../breach_shift/data/models/characters) | Packaged runtime zombie models, including the female Runner. |
 | [Runtime weapons](../breach_shift/data/models/weapons) | Packaged weapon models used by the first-person view. |
@@ -21,13 +21,16 @@
 
 Characters are authored by [the Blender workshop tools](../tools/blender) and
 installed with `python -m breach_shift.art.export` after GLB generation.
-The game loads the compressed BAM.PZ files in a source
-checkout and includes the same runtime models in the installable Python package.
+The game loads the reviewed GLBs for all characters and the rifle, plus the
+three retained compressed BAM.PZ weapon models. The installable package uses
+the same assets and performs no runtime downloads.
 Unused placeholder directories have been removed. PNG concept sheets remain
 visual design references. See [the cleanup audit](../docs/asset-audit.md).
 See [production credits](./LICENSE-PRODUCTION.md) and
 [the production workflow](../docs/production-assets.md) for new assets.
 The [Rodin model handoff](../docs/rodin-models.md) documents the first generated
 rifle and Walker and their locally retained detailed sources.
+See [the supplied Warden and motion handoff](../docs/warden-and-motion.md) and
+[actual animated gameplay](./previews/gameplay-motion.png).
 See [the art brief](../docs/art-direction.md) and
 [the map handoff](../docs/campaign.md#replacement-assets) before adding assets.
