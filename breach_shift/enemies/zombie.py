@@ -39,6 +39,7 @@ class Zombie(Target):
         self.current_time = now
         self.last_hit_at = now
         self.next_attack = now + 0.6
+        self.next_voice_at = now + 1.5
         self.next_summon = now + 5.0
         self.summons_used = 0
         self.healing_fraction = 0.0
@@ -124,21 +125,32 @@ class Zombie(Target):
 
     def _move(self, dt: float, now: float, goal: Point3, grid: NavigationGrid) -> None:
         position = self.root.getPos()
-        if now >= self.next_route:
-            self.path = grid.find_path((position.x, position.y), (goal.x, goal.y))
+        start, destination = (position.x, position.y), (goal.x, goal.y)
+        if grid.segment_is_free(start, destination):
+            self.path = [destination]
+        elif now >= self.next_route or not self.path:
+            self.path = grid.pursuit_path(start, destination)
             self.next_route = now + 0.45
-        while self.path and hypot(self.path[0][0] - position.x, self.path[0][1] - position.y) < 0.12:
-            self.path.pop(0)
-        if not self.path:
-            return
-        dx, dy = self.path[0][0] - position.x, self.path[0][1] - position.y
-        distance = hypot(dx, dy)
         speed = self.spec.speed * (1.35 if self.current_reality is Reality.BREACH else 1.0)
-        step = min(speed * dt, distance)
-        x, y = position.x + dx / distance * step, position.y + dy / distance * step
-        if grid.is_free(x, y):
+        remaining = speed * max(0.0, dt)
+        while self.path and remaining > 0:
+            dx, dy = self.path[0][0] - position.x, self.path[0][1] - position.y
+            distance = hypot(dx, dy)
+            if distance < .01:
+                self.path.pop(0)
+                continue
+            step = min(remaining, distance)
+            x, y = position.x + dx / distance * step, position.y + dy / distance * step
+            if not grid.segment_is_free((position.x, position.y), (x, y)):
+                self.path.clear()
+                self.next_route = 0.0
+                break
             self.root.setX(x)
             self.root.setY(y)
+            position = self.root.getPos()
+            remaining -= step
+            if step >= distance - .0001:
+                self.path.pop(0)
 
     def update_ai(self, dt: float, now: float, player: Point3,
                   reality: Reality, grid: NavigationGrid, line_clear: bool) -> list[ZombieAction]:

@@ -26,6 +26,7 @@ class NavigationGrid:
             if self.is_free(x * cell_size, y * cell_size)
         }
         self.components: dict[Cell, int] = {}
+        self._approach_cache: dict[tuple[int, Cell], Cell] = {}
         for cell in self.free:
             if cell in self.components:
                 continue
@@ -93,3 +94,51 @@ class NavigationGrid:
         origin = self._cell(self.nearest_free(point))
         component = self.components[origin]
         return [self._position(cell) for cell in self.free if self.components[cell] == component]
+
+    def segment_is_free(self, start: Position, end: Position) -> bool:
+        """Sweep the enemy clearance against solid boxes, including thin barriers."""
+        if not self.is_free(*start) or not self.is_free(*end):
+            return False
+        for block in self.blocks:
+            interval_start, interval_end = 0.0, 1.0
+            for origin, destination, center, extent in (
+                    (start[0], end[0], block.x, block.width / 2 + .55),
+                    (start[1], end[1], block.y, block.depth / 2 + .55)):
+                low, high = center - extent + 1e-6, center + extent - 1e-6
+                delta = destination - origin
+                if abs(delta) < 1e-9:
+                    if not low <= origin <= high:
+                        interval_start = 2.0
+                        break
+                else:
+                    first, second = sorted(((low - origin) / delta, (high - origin) / delta))
+                    interval_start = max(interval_start, first)
+                    interval_end = min(interval_end, second)
+                    if interval_start > interval_end:
+                        break
+            if interval_start <= interval_end:
+                return False
+        return True
+
+    def pursuit_path(self, start: Position, goal: Position) -> list[Position]:
+        """Approach an unreachable player up to the blocking gate instead of idling."""
+        start_cell = self._cell(self.nearest_free(start))
+        goal_cell = self._cell(self.nearest_free(goal))
+        component = self.components[start_cell]
+        if self.components[goal_cell] != component:
+            key = (component, goal_cell)
+            if key not in self._approach_cache:
+                if len(self._approach_cache) >= 256:
+                    self._approach_cache.clear()
+                self._approach_cache[key] = min(
+                    (cell for cell in self.free if self.components[cell] == component),
+                    key=lambda cell: (cell[0] - goal_cell[0]) ** 2 + (cell[1] - goal_cell[1]) ** 2,
+                )
+            goal_cell = self._approach_cache[key]
+        path = self.find_path(start, self._position(goal_cell))
+        # Replanning must not send a moving enemy back to its rounded starting cell.
+        if path:
+            path.pop(0)
+        if path and not self.segment_is_free(start, path[0]):
+            path.insert(0, self._position(start_cell))
+        return path
