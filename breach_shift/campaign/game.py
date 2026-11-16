@@ -142,6 +142,7 @@ class CampaignGame(BreachShift):
         self.last_encounter_time = self.clock.getFrameTime()
         for target in self.targets.values():
             self.taskMgr.remove(f"reset-color-{target.name}")
+            target.model.removeNode()
             target.root.removeNode()
         self.targets.clear()
         self.zombies.clear()
@@ -294,6 +295,7 @@ class CampaignGame(BreachShift):
         for zombie in list(self.zombies.values()):
             if zombie.health <= 0:
                 if zombie.died_at is not None and now - zombie.died_at >= 10:
+                    zombie.model.removeNode()
                     zombie.root.removeNode()
                     self.zombies.pop(zombie.name, None)
                     self.targets.pop(zombie.name, None)

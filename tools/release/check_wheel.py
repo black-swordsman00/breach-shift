@@ -10,8 +10,9 @@ def check(path):
         names = archive.namelist()
         for folder, expected in (("characters", 10), ("weapons", 4)):
             models = [name for name in names if name.startswith(f"breach_shift/data/models/{folder}/")
-                      and name.endswith((".bam", ".bam.pz"))]
-            if len(models) != expected:
+                      and name.endswith((".bam", ".bam.pz", ".glb"))]
+            unique = {Path(name).name.split(".")[0] for name in models}
+            if len(models) != expected or len(unique) != expected:
                 raise ValueError(f"Wheel contains {len(models)} {folder} models; expected {expected}")
         for folder, suffix, expected in (("levels", ".json", 10), ("audio", ".wav", 18)):
             files = [name for name in names if name.startswith(f"breach_shift/data/{folder}/") and name.endswith(suffix)]

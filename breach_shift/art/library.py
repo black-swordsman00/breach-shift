@@ -1,12 +1,23 @@
 """Load packaged assets; missing production art is an explicit error."""
 
 from functools import lru_cache
+import json
 from pathlib import Path
 
 from panda3d.core import Filename, Loader, NodePath
 
 
 MODEL_ROOT = Path(__file__).resolve().parents[1] / "data" / "models"
+
+
+@lru_cache(maxsize=32)
+def _metadata(path: str) -> dict:
+    source = Path(path)
+    return json.loads(source.read_text(encoding="utf-8")) if source.is_file() else {}
+
+
+def metadata(relative_path: str) -> dict:
+    return _metadata(str(MODEL_ROOT / relative_path))
 
 
 @lru_cache(maxsize=24)

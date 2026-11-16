@@ -1,11 +1,11 @@
 """Load weapon assets and animate the first-person view."""
 
-from math import exp, sin
+from math import exp, isfinite, sin
 
-from panda3d.core import AmbientLight, DirectionalLight, NodePath
+from panda3d.core import AmbientLight, DepthOffsetAttrib, DirectionalLight, NodePath
 
 from breach_shift.art.primitives import part, rod, sphere
-from breach_shift.art.library import instantiate
+from breach_shift.art.library import instantiate, metadata
 from breach_shift.combat.catalog import WeaponKind
 
 
@@ -13,7 +13,20 @@ MUZZLES = {WeaponKind.PISTOL: .38, WeaponKind.SMG: .60, WeaponKind.RIFLE: .96, W
 
 
 def make_weapon_model(kind: WeaponKind) -> NodePath:
-    return instantiate(f"weapons/{kind.value}.bam")
+    model = instantiate(f"weapons/{kind.value}.bam")
+    model.setName(f"{kind.value}-model")
+    model.setTag("weapon-kind", kind.value)
+    profile = metadata(f"weapons/{kind.value}.json")
+    if profile.get("provider"):
+        model.setTag("provider", profile["provider"])
+    return model
+
+
+def muzzle_position(kind: WeaponKind) -> tuple[float, float, float]:
+    position = metadata(f"weapons/{kind.value}.json").get("muzzle", (0, MUZZLES[kind], .055))
+    if len(position) != 3 or not all(isfinite(value) for value in position):
+        raise ValueError(f"Invalid muzzle position for {kind.value}")
+    return tuple(position)
 
 
 def _arms(parent, kind):
@@ -35,8 +48,11 @@ class WeaponView:
         self.root = camera.attachNewNode("first-person-weapon")
         self.root.setScale(.78)
         self.root.setBin("fixed", 40)
-        self.root.setDepthTest(False)
-        self.root.setDepthWrite(False)
+        self.root.setDepthTest(True)
+        self.root.setDepthWrite(True)
+        # Compress viewmodel depth into the near slice: world walls cannot cut
+        # through it, while front/back triangles still occlude one another.
+        self.root.setAttrib(DepthOffsetAttrib.make(0, 0.0, .1))
         ambient = AmbientLight("weapon-fill")
         ambient.setColor((.72, .75, .77, 1))
         key = DirectionalLight("weapon-key")
@@ -59,7 +75,8 @@ class WeaponView:
         arms = self.root.attachNewNode("player-arms")
         _arms(arms, kind)
         arms.flattenStrong()
-        self.flash = part(self.root, "muzzle-flash", sphere(8, 4), (0, MUZZLES[kind] + .025, .055),
+        muzzle_x, muzzle_y, muzzle_z = muzzle_position(kind)
+        self.flash = part(self.root, "muzzle-flash", sphere(8, 4), (muzzle_x, muzzle_y + .025, muzzle_z),
                           (.045, .13, .045), (1, .65, .13, 1), "metal")
         self.flash.setLightOff(3)
         self.flash.hide()
