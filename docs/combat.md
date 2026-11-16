@@ -1,84 +1,46 @@
-# Combat balance and encounter rules
+# Side-view combat
 
-## Zombie health
+The four original weapon slots retain independent magazines, reserve ammo,
+cooldowns and reload durations. The pistol and shotgun fire once per click;
+the SMG and rifle repeat while held. Switching weapons cancels an unfinished
+reload without granting ammunition. Shotgun pellets share one spent shell and
+one accuracy event. Bullets hit the nearest enemy or architecture surface.
 
-HP is unique for every enemy and increases in introduction order. Existing
-armor, cloaking, regeneration and Breach rules still apply.
+| Weapon | Damage | Magazine / reserve | Interval | Reload |
+| --- | --- | --- | --- | --- |
+| Pistol | 25 | 12 / 36 | 0.25 s | 1.5 s |
+| SMG | 14 | 30 / 90 | 0.09 s | 1.8 s |
+| Rifle | 38 | 24 / 72 | 0.18 s | 2.1 s |
+| Shotgun | 96 over six pellets | 6 / 18 | 0.9 s | 2.8 s |
 
-| Map | Enemy | HP | Melee/projectile damage |
+| Sector | Infected | HP | Distinct behavior |
 | --- | --- | --- | --- |
-| 1 | Walker | 75 | 12 |
-| 2 | Runner, adult female model | 100 | 8 |
-| 3 | Brute | 150 | 28 |
-| 4 | Spitter | 180 | 10 |
-| 5 | Leaper | 220 | 18 |
-| 6 | Armored | 270 | 16 |
-| 7 | Howler | 320 | 11 |
-| 8 | Stalker | 380 | 14 |
-| 9 | Regenerator | 450 | 15 |
-| 10 | Warden | 800 | 35 |
+| 1 | Walker | 75 | Ground pursuit and melee |
+| 2 | Runner | 100 | Faster pursuit and attacks |
+| 3 | Brute | 150 | Slower heavy melee |
+| 4 | Spitter | 180 | Holds distance and fires visible projectiles |
+| 5 | Leaper | 220 | Lunges and crosses gaps |
+| 6 | Armored | 270 | Receives 65% incoming damage |
+| 7 | Howler | 320 | Temporarily boosts nearby infected speed |
+| 8 | Stalker | 380 | Translucent in Normal |
+| 9 | Regenerator | 450 | Heals 5 HP/s after four seconds without damage |
+| 10 | Warden | 800 | Vulnerable in Breach; telegraphed, jump-avoidable stomp |
 
-Nearby enemies have a name and HP bar. A cloaked Stalker also hides its HP
-display. Walking limbs, hit flashes and attack warnings use independent model
-instances, so animating one enemy does not move another.
-Pursuit movement is 20% faster than the original catalog speed, with the
-existing additional 35% Breach multiplier. The supplied Warden is 2.6 m tall
-with a wider collider and navigation clearance. Its 800 HP and 35-damage stomp
-remain the strongest enemy profile. Footstep cycles follow actual distance;
-knees, elbows, hips, spine and head blend their motion independently. Death
-removes collision immediately and leaves a briefly falling visible body.
+Pursuit uses 1.5 times catalog speed and gains a further 20% in Breach. Non-leapers
+stop at cliffs, and infected jump low solid obstacles. Solid gates block both
+movement and line of sight. Head-height hits gain a damage bonus. The player
+has a brief damage grace period to prevent overlapping instant melee kills.
 
-## Weapons
+Killed infected drop one weapon-specific ammo bundle. Its colour indicates
+weapon type. Waves begin after 30 active seconds, increase over time and respect
+a 32-alive cap. Recovering the core stops reinforcements and heals up to 25 HP.
 
-All four slots are available in the campaign. Training keeps its original pistol.
+Double jumps reset only on landing. Crouching lowers the actual body to 1.05 m
+and halves movement speed; standing requires 1.8 m clearance. High spit can
+pass overhead while crouched, and low spit still hurts. The Warden's stomp is
+avoided when the player's feet are sufficiently above its ground level.
 
-| Key | Weapon | Damage | Magazine / initial reserve | Fire interval | Reload | Range |
-| --- | --- | --- | --- | --- | --- | --- |
-| 1 | Pistol | 25 | 12 / 36 | 0.25 s | 1.5 s | 100 m |
-| 2 | SMG | 14 | 30 / 90 | 0.09 s, automatic | 1.8 s | 65 m |
-| 3 | Rifle | 38 | 24 / 72 | 0.18 s, automatic | 2.1 s | 160 m |
-| 4 | Shotgun | Up to 96 | 6 / 18 | 0.9 s | 2.8 s | 24 m |
-
-The shotgun traces six spreading pellets at 16 damage each, spending one shell.
-Walls block each pellet independently. All weapons have a distinct visible
-model, gloved player arms, recoil and a short muzzle flash. Switching slots
-preserves ammunition and fire cooldown and cancels an unfinished reload.
-The support hand and weapon animate a reload for its exact gameplay duration;
-the HUD shows progress. Ammunition is granted only when the reload completes.
-Each map checkpoint refills every weapon and retains the selected slot.
-
-## Ammunition drops
-
-Every enemy killed through the combat system creates exactly one random
-weapon-specific pickup. The four weapon types have equal selection probability;
-the amount is uniformly selected within the bundle range below.
-
-| Ammunition | Rounds per box |
-| --- | --- |
-| Pistol | 6–18 |
-| SMG | 15–40 |
-| Rifle | 10–25 |
-| Shotgun | 2–6 shells |
-
-Walk within 1.5 m to collect. A wall or excessive height difference blocks
-collection. Ammo is added to its matching weapon even if another is equipped.
-Pickups last 90 active seconds, with a maximum of 64 on the map. Retry and map
-transitions clear old pickups; dead enemy scene nodes are pruned after 10 seconds.
-
-## Timed reinforcements
-
-The first wave is due at 30 seconds of active play. Wave size is
-`min(2 + floor(active_seconds / 30), 10)`, also limited by the free places under
-the 32-enemy alive cap. After each wave the next interval is
-`max(8, 26 - 2 * wave_number)` seconds. A delayed update never spawns several
-catch-up waves in a single frame.
-
-Spawns are at least 12 m from the player, on ground safe in both realities,
-in the player's current reachable navigation component, away from living
-enemies. Only already introduced enemy types are selected. Timed waves do not
-create additional Wardens. Losing window focus, dying or completing the
-campaign stops active encounter time. Retrying or entering a new map resets it.
-
-Recovering the power core seals timed reinforcements for the current map.
-This preserves a finite clear-and-exit objective. Existing Howler summons
-remain bounded by their per-enemy budget and the shared alive cap.
+The firing range freezes target AI and tracks accepted shots, hits, accuracy
+and completion time. T starts a fresh run. Campaign extraction requires the
+core, zero living infected and Normal reality. Retry resets only the current
+sector; retry after completing sector ten starts a new campaign.

@@ -1,7 +1,0 @@
-{
-  "kind": "armored", "name": "The Riot Guard", "height": 1.8,
-  "age": "young", "sex": "male", "physique": "averagemuscle-averageweight",
-  "skin": [0.34, 0.35, 0.33], "jacket": [0.050, 0.075, 0.105],
-  "trousers": [0.042, 0.055, 0.070], "accent": [0.24, 0.29, 0.32],
-  "style": "riot", "mouth": 0.45, "hunch": 5, "seed": 66
-}

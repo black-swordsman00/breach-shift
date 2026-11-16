@@ -1,4 +1,4 @@
-"""Small reusable voice pools with positional falloff and an explicit mute switch."""
+"""Bounded sound pools; the 2D view supplies distance-based volume."""
 
 from importlib.resources import files
 from random import Random
@@ -20,16 +20,15 @@ SOUNDS = {
 
 
 class SoundBank:
-    def __init__(self, loader, spatial=None, *, enabled=True, rng=None):
+    def __init__(self, loader, *, enabled=True, rng=None):
         self.enabled = enabled
         self.loader = loader
-        self.spatial = spatial
         self.random = rng or Random()
         self.voices = {}
         self.cursor = {}
         self._last_empty = -100.0
 
-    def play(self, cue, *, node=None, volume=.75, pitch=1.0, now=None):
+    def play(self, cue, *, volume=.75, pitch=1.0, now=None):
         if not self.enabled:
             return None
         if cue == "empty" and now is not None:
@@ -37,32 +36,24 @@ class SoundBank:
                 return None
             self._last_empty = now
         filename = self.random.choice(SOUNDS[cue])
-        positional = node is not None and self.spatial is not None
-        key = (filename, positional)
+        key = filename
         if key not in self.voices:
             path = Filename.fromOsSpecific(str(files("breach_shift").joinpath("data", "audio", filename))).getFullpath()
-            factory = self.spatial.loadSfx if positional else self.loader.loadSfx
-            self.voices[key] = [factory(path) for _ in range(4)]
+            self.voices[key] = [self.loader.loadSfx(path) for _ in range(4)]
             self.cursor[key] = 0
         pool = self.voices[key]
         sound = pool[self.cursor[key]]
         self.cursor[key] = (self.cursor[key] + 1) % len(pool)
         sound.stop()
-        if positional:
-            self.spatial.attachSoundToObject(sound, node)
-            self.spatial.setSoundMinDistance(sound, 3.0)
-            self.spatial.setSoundMaxDistance(sound, 45.0)
         sound.setVolume(max(0.0, min(1.0, volume)))
         sound.setPlayRate(max(.5, min(1.8, pitch)))
         sound.play()
         return sound
 
     def stop_all(self):
-        for (filename, positional), pool in self.voices.items():
+        for pool in self.voices.values():
             for sound in pool:
                 sound.stop()
-                if positional:
-                    self.spatial.detachSound(sound)
 
     def toggle(self):
         self.enabled = not self.enabled

@@ -1,7 +1,0 @@
-{
-  "kind": "walker", "name": "The Groundskeeper", "height": 1.8,
-  "age": "old", "sex": "male", "physique": "minmuscle-minweight",
-  "skin": [0.36, 0.37, 0.29], "jacket": [0.12, 0.155, 0.085],
-  "trousers": [0.065, 0.075, 0.061], "accent": [0.37, 0.29, 0.12],
-  "style": "worker", "mouth": 0.25, "hunch": 7, "seed": 11
-}

@@ -1,0 +1,153 @@
+{
+  "number": 1,
+  "name": "Quarantine Yard",
+  "introduced": "walker",
+  "theme": "yard",
+  "size": [
+    126,
+    18
+  ],
+  "player_spawn": [
+    3,
+    0
+  ],
+  "platforms": [
+    [
+      0,
+      -3,
+      126,
+      3
+    ],
+    [
+      19,
+      0,
+      2,
+      0.9
+    ],
+    [
+      29,
+      2,
+      7,
+      0.4,
+      true
+    ],
+    [
+      39,
+      3.6,
+      6,
+      0.4,
+      true
+    ],
+    [
+      47,
+      1.2,
+      7,
+      0.4
+    ],
+    [
+      89,
+      2.1,
+      8,
+      0.4,
+      true
+    ],
+    [
+      108,
+      0,
+      2,
+      1.2
+    ]
+  ],
+  "normal_gate": [
+    58,
+    0,
+    0.75,
+    14
+  ],
+  "breach_gate": [
+    102,
+    0,
+    0.75,
+    14
+  ],
+  "core": [
+    81,
+    1.1
+  ],
+  "exit": [
+    123,
+    0
+  ],
+  "spawns": [
+    [
+      "walker",
+      14.0,
+      0
+    ],
+    [
+      "walker",
+      39.5,
+      0
+    ],
+    [
+      "walker",
+      65.0,
+      0
+    ],
+    [
+      "walker",
+      90.5,
+      0
+    ],
+    [
+      "walker",
+      116.0,
+      0
+    ]
+  ],
+  "decor": [
+    [
+      "barricade",
+      8,
+      0,
+      1
+    ],
+    [
+      "barrel",
+      25,
+      0,
+      0.9
+    ],
+    [
+      "car",
+      35,
+      0,
+      1
+    ],
+    [
+      "lamp",
+      11,
+      0,
+      1
+    ],
+    [
+      "lamp",
+      69,
+      0,
+      1
+    ],
+    [
+      "crate",
+      88,
+      0,
+      1
+    ],
+    [
+      "debris",
+      113,
+      0,
+      1
+    ]
+  ],
+  "briefing": "Switch to Breach to cross the cyan gate and recover the core. Return to Normal, clear the infected and reach extraction."
+}

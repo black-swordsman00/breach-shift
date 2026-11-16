@@ -1,1 +1,1 @@
-"""Breach Shift: an offline first-person zombie survival game."""
+"""Breach Shift: an offline 2D side-view zombie survival game."""

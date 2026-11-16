@@ -1,151 +1,97 @@
-# Breach Shift
+﻿# Breach Shift
 
-An offline Python/Panda3D first-person zombie campaign built around switching
-between **Normal** and **Breach** reality. Ten playable maps introduce ten enemy
-types. The game includes ten articulated Blender zombie models, four visible
-weapon models, ammunition pickups and escalating reinforcements. Levels use
-an upgraded first courtyard with Poly Haven PBR architecture and Poly Pizza
-set dressing; the remaining maps retain prototype scenery.
-The supplied Warden sculpt is the final boss. All ten zombies now have skinned
-humanoid rigs, a distance-driven gait, attack poses and a short death animation.
-[Concept art](./assets/concepts) remains the target for later art refinement.
+An offline **2D side-view zombie action game** built in Python with Panda3D.
+Fight through ten platform maps, switch between **Normal** and **Breach**,
+recover each core and reach extraction. Ten infected types culminate in the
+supplied Warden boss, vulnerable only in Breach.
 
-## Run the game
+The game uses animated PNG sprites, layered city/interior scenery and four
+weapons with independent ammunition. Movement includes double jumps, crouching,
+ceiling collisions and one-way platforms. Reloads, attacks and deaths have
+animated poses. There is no runtime 3D model loading or paid generation.
 
-Requires Python 3.10 or newer. Set up the local environment once:
+## Run
+
+Requires Python 3.10 or newer. From the project directory:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-```
-
-Start the campaign from the project directory:
-
-```powershell
 .\.venv\Scripts\python.exe main.py
 ```
 
-To practice against the Warden on the final map:
+With the existing environment, only the final command is needed. Practice on
+the Warden sector or start the firing range:
 
 ```powershell
 .\.venv\Scripts\python.exe main.py --level 10
-```
-
-Start the original three-target training arena:
-
-```powershell
 .\.venv\Scripts\python.exe main.py --training
 ```
 
-The equivalent module commands are `python -m breach_shift` and
-`python -m breach_shift --training`, using the same environment. Run
-`python main.py --help` for available options. The former standalone campaign
-entry point is now the default mode of the single launcher.
-
-For an editable package installation, `python -m pip install -e .` also provides
-the `breach-shift` command. Campaign JSON is included as package data.
-
-## Project layout
-
-```text
-Breach Shift/
-├── main.py                 # Single source-checkout launcher
-├── breach_shift/           # Importable game package
-│   ├── app.py              # Game-mode selection
-│   ├── art/                # Reproducible 3D meshes, export, viewmodels, previews
-│   ├── core/               # Shared Panda3D game, controls, collisions, HUD
-│   ├── campaign/           # Campaign loop, objectives, checkpoints
-│   ├── combat/             # Weapons, ammunition, damageable targets
-│   ├── enemies/            # Zombie catalog and AI
-│   ├── player/             # Health, jump and double-jump state
-│   ├── training/           # Training-session statistics
-│   ├── world/              # Level loading, scene geometry, navigation, Shift
-│   └── data/levels/        # Ten campaign map definitions
-├── assets/                 # Concepts, references and production-art locations
-├── docs/                   # Architecture, campaign and visual direction
-├── tests/                  # Unit and Panda3D integration tests
-├── pyproject.toml          # Package metadata, dependency and installed launcher
-└── requirements.txt        # Dependency for running directly from this checkout
-```
-
-See [architecture](./docs/architecture.md) for module responsibilities,
-[campaign design](./docs/campaign.md) for maps and gameplay, and
-[art direction](./docs/art-direction.md) for the character and environment brief.
-See [combat balance](./docs/combat.md) for HP, weapons, loot and reinforcement rules.
+`python -m breach_shift` and the installed `breach-shift` command use the same
+launcher. Map numbers range from 1 to 10; `--training` is a separate mode.
 
 ## Controls
 
 | Input | Action |
 | --- | --- |
-| WASD / mouse | Move / look |
-| Left click / R | Shoot / reload |
-| 1 / 2 / 3 / 4 | Pistol / SMG / rifle / shotgun in the campaign |
-| Space | Jump; release and press again for a double jump |
-| C / Ctrl, held | Crouch with a lower camera/collider and slower movement |
-| F1 | Show/hide the campaign controls panel |
-| Shift | Change reality, with a two-second cooldown |
-| E | Collect the power core or enter an unlocked exit |
-| T | Retry the current map; restart after completing the campaign |
-| Escape | Exit |
+| A / D or Left / Right | Move left / right |
+| Mouse / Left click | Aim / shoot; hold for SMG and rifle |
+| Space / W / Up | Jump; release and press again for a double jump |
+| C / Ctrl / Down, held | Crouch and move slowly under low passages |
+| R | Reload |
+| 1 / 2 / 3 / 4 | Pistol / SMG / rifle / shotgun |
+| Shift | Change reality; two-second cooldown |
+| E | Recover a nearby core or use extraction |
+| T | Retry the sector; restart the range or completed campaign |
+| Esc | Pause / resume; the pause menu also provides Quit |
+| F1 | Open / close controls and pause gameplay |
 | M | Toggle sound |
 
-In training, T resets the full practice session. On campaign maps, recover the
-core in Breach, defeat every zombie, and return to Normal to reach the exit.
-Hold left click for automatic fire with the SMG or rifle. Each weapon keeps
-its own ammunition; changing weapons cancels an unfinished reload.
+Cross the cyan gate in Breach, recover the purple core with E, clear the
+infected and return to Normal to cross the next gate and extract. Recovering
+the core stops reinforcements and heals up to 25 HP. Each kill drops ammunition.
+Jump when the Warden's stomp warning appears. Pausing or losing window focus
+stops the simulation and releases held fire.
 
-Each killed zombie drops a random weapon-specific ammunition box. Walk close
-to collect it. Reinforcements begin after 30 active seconds and grow larger and
-more frequent. Recovering the core seals reinforcements so the remaining
-enemies can be cleared and the exit reached.
+## Current game previews
 
-Weapons have distinct firing sounds plus reload and empty-magazine effects.
-Zombies growl, react to hits and death, and announce attacks; their voices are
-positioned in 3D and become quieter with distance. See [audio](./docs/audio.md).
-Reloads animate the weapon and support hand using each weapon's real reload
-duration. Movement, breathing, recoil and drawing blend into the first-person
-pose. Cancelling or switching weapons clears the reload pose and pending ammo.
+These are captures of the actual renderer:
 
-Enemies pursue the player directly over clear ground, route around cover, and
-approach the nearest reachable side of a sealed barrier while waiting for Shift.
+![Side-view campaign](./assets/previews/side-view.png)
+![Warden in Breach](./assets/previews/side-view-warden.png)
 
-## Validation
+## Project
+
+| Location | Purpose |
+| --- | --- |
+| [main.py](./main.py), [app](./breach_shift/app.py) | Shared launcher |
+| [platformer](./breach_shift/platformer) | 2D physics, maps, simulation, renderer and input |
+| [combat](./breach_shift/combat), [enemies](./breach_shift/enemies) | Arsenal, loot and infected specifications |
+| [campaign](./breach_shift/campaign), [reality](./breach_shift/world/reality.py) | Progress, reinforcement timing and Shift |
+| [player](./breach_shift/player), [training](./breach_shift/training) | Health and firing-range statistics |
+| [game data](./breach_shift/data) | Ten maps, PNG art, sound effects and credits |
+| [tests](./tests) | Pure gameplay and real-renderer regressions |
+| [tools](./tools) | Offline art/audio rebuilding, previews and package validation |
+
+## Verification and art
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe -m compileall -q breach_shift tests tools
+$env:PYTHONPATH='.'
+.\.venv\Scripts\python.exe tools/preview.py
 ```
 
-Tests cover combat, collisions, navigation, safe Shift destinations, objectives,
-all ten campaign transitions, retry, and training/jump behavior. A physical
-keyboard/mouse playthrough and balance review remain manual checks.
+Tests cover collisions, both realities, every map, weapons, animation data,
+mirrored rendering and pause/retry input. Manual keyboard/mouse play and
+difficulty balancing remain useful alongside automated checks.
 
-After building the Blender source library, install its fourteen runtime models
-or capture the real renderer:
+See [2D art and rebuilding](./docs/2d-art.md) and
+[asset credits](./breach_shift/data/credits/sprites.md). The optional baker
+reuses model data from local Git history, so obsolete 3D exports and Blender
+bundles are unnecessary in the working tree. One private source copy of the
+supplied sculpt remains in an ignored cache and is never packaged or pushed.
 
-```powershell
-.\.venv\Scripts\python.exe -m breach_shift.art.export
-.\.venv\Scripts\python.exe -m breach_shift.art.preview --mode game
-```
-
-[Actual engine previews](./assets/previews/README.md) show the current game and models.
-The [local review gallery](./assets/previews/gallery.html) includes Blender
-portraits, statistics, sounds and editable source links.
-See [the Blender workflow](./docs/blender-workshop.md) to edit or rebuild them.
-
-See [the production asset workflow](./docs/production-assets.md) for the first
-modular courtyard, licenses, GLB export checks and the Rodin weapon handoff.
-The first [Rodin rifle and skinned Walker](./docs/rodin-models.md) now run in-game;
-their detailed sources are retained for local refinement.
-
-Gameplay runs offline and uses no external services or runtime network access.
-See the [ZombieModding source review](./docs/map-source-review.md) before
-selecting downloadable replacement maps. No third-party map installers are
-part of the game or its asset workflow.
-Generated concept images are design references. Retained character sources use
-licensed CC0 anatomy and original costumes, painted decay, equipment and mutations.
-The Rodin rifle and Walker have generated geometry with local Blender optimization;
-the Walker uses a skinned skeleton. Editable sources retain their detailed meshes.
-Runtime BAM.PZ and GLB models embed textures and ship in the installed package,
-alongside the environment's baked Poly Haven HDRI. The concept paintings remain
-the visual target; authored locomotion clips and further environment art are
-future work.
+Gameplay uses no network services, account login or API keys. No Fal.ai calls
+were made for the 2D conversion.

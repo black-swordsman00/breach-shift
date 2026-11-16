@@ -1,70 +1,44 @@
-# Architecture
+# 2D architecture
 
-The project uses one importable `breach_shift` package and one source-checkout
-launcher. Imports name the owning package explicitly; no module depends on
-the current working directory or adds folders to `sys.path`.
+The game is a side-view platformer. All gameplay positions are horizontal x and
+vertical z in metres. Panda3D draws flat cards in a single y plane through an
+orthographic lens. No runtime model, rig, lighting or network client is loaded.
 
-## Responsibilities
+| Module | Responsibility |
+| --- | --- |
+| [app](../breach_shift/app.py) | Validate command-line mode and sector |
+| [physics](../breach_shift/platformer/physics.py) | Swept rectangle movement, roofs, ceilings, one-way platforms and shot segments |
+| [levels](../breach_shift/platformer/levels.py) | Validate ten authored side-view maps and their rosters |
+| [session](../breach_shift/platformer/session.py) | Player, infected behaviors, hitscan, projectiles, reloads, loot and objectives |
+| [game](../breach_shift/platformer/game.py) | Window, fixed 120 Hz stepping, camera, input, audio and HUD |
+| [sprites](../breach_shift/platformer/sprites.py) | PNG atlas cards and frame selection |
+| [scenery](../breach_shift/platformer/scenery.py) | Original parallax backgrounds, interior facades and visible platforms/gates |
+| [arsenal](../breach_shift/combat/arsenal.py), [weapon](../breach_shift/combat/weapon.py) | Independent weapon state and ammunition |
+| [progress](../breach_shift/campaign/state.py), [director](../breach_shift/campaign/director.py), [reality](../breach_shift/world/reality.py) | Sector progression, waves and safe Shift cooldown |
+| [health](../breach_shift/player/health.py), [statistics](../breach_shift/training/session.py) | Reused independent state |
 
-| Area | Main modules | Responsibility |
-| --- | --- | --- |
-| Entry points | [launcher](../main.py), [app](../breach_shift/app.py), [module entry](../breach_shift/__main__.py) | Parse the mode and start its game loop. |
-| Shared game | [core/game](../breach_shift/core/game.py) | Panda3D setup, first-person input, movement, collisions, shooting callbacks, HUD and the original training arena. |
-| Campaign | [campaign/game](../breach_shift/campaign/game.py), [state](../breach_shift/campaign/state.py) | Extend the shared game with enemy encounters, objectives, progression and retry. |
-| Reinforcements | [director](../breach_shift/campaign/director.py) | Advance waves using active gameplay time, enforce the alive cap and stop after core recovery. |
-| Combat | [weapon](../breach_shift/combat/weapon.py), [target](../breach_shift/combat/target.py) | Manage ammunition, cooldowns and damageable scene actors. |
-| Arsenal and loot | [catalog](../breach_shift/combat/catalog.py), [arsenal](../breach_shift/combat/arsenal.py), [loot](../breach_shift/combat/loot.py) | Describe four weapons, preserve their independent state and roll ammunition rewards. |
-| Runtime art | [characters](../breach_shift/art/characters.py), [weapons](../breach_shift/art/weapons.py), [export](../breach_shift/art/export.py) | Build reproducible articulated 3D meshes, load exported BAM models and animate the first-person weapon. |
-| Enemies | [zombie](../breach_shift/enemies/zombie.py), [catalog](../breach_shift/enemies/catalog.py) | Enemy behaviors, stats and introduction order. |
-| Player | [health](../breach_shift/player/health.py), [jump](../breach_shift/player/jump.py) | Rendering-independent player state. |
-| Training | [session](../breach_shift/training/session.py) | Shooting accuracy, elapsed time and session completion. |
-| World | [levels](../breach_shift/world/levels.py), [scene](../breach_shift/world/scene.py), [navigation](../breach_shift/world/navigation.py), [reality](../breach_shift/world/reality.py) | Load and validate map definitions, render blockouts, navigate active geometry and switch realities. |
+Simulation has no Panda3D imports. The renderer consumes its state and clears
+sound events after playback. Pause and focus loss freeze simulation, reloads
+and waves and release held fire. Input edges remain pending until a simulation
+tick, so high frame rates do not lose a jump or reload press.
 
-`CampaignGame` still extends the shared `BreachShift` class. The shared class
-contains the working training arena and its input/HUD implementation; this
-reorganization keeps that behavior while giving each subsystem a clear home.
-Further extraction can follow concrete feature needs.
+Use `restart_sector` for game retry. Panda3D calls its own `restart` while
+constructing ShowBase; overriding it causes initialization failure. Keep the
+engine's window-event handler so resizing and close behavior remain intact.
 
-## Player movement against architecture
+Shared solids and the active reality gate define the physical map. Changing
+reality first validates the complete player body in the destination. Characters
+use swept horizontal and vertical movement; feet land on tops and heads stop
+at solid undersides. Only descending bodies land on one-way platforms.
 
-[The player body guard](../breach_shift/player/collision.py) sweeps a full
-1.8-metre standing or 1.15-metre crouching body against active box colliders.
-It stops feet at roofs, heads at ceilings and horizontal motion at side faces,
-then permits sliding along walls. The old torso sphere alone could pass above
-a crate while the player's legs entered its side. Roof support now considers
-the player's footprint rather than only the centre ray.
+Every packaged module must be reachable from the launcher. The
+[source audit](../tools/release/check_sources.py) checks that constraint, local
+documentation links, private path leakage and unexpected process/network imports.
+[Route tests](../tests/test_side_routes.py) prove each map's geometry and
+objectives are reachable using controls, with enemies disabled. Combat and
+[real-framebuffer tests](../tests/test_side_render.py) cover the remaining rules.
 
-Panda3D still handles boundary planes, moving enemies and the ground ray.
-The body guard also constrains displacement caused by the pusher. Stashed
-targets and inactive reality blocks are excluded through the active scene
-graph. A ceiling impact stops ascent without resetting airborne jumps.
-
-This guard uses world-aligned box bounds; rotated architecture is conservative.
-It is not a general imported-mesh or stair controller. New environment assets
-need matching collision geometry, and multilevel maps need navigation work.
-Regression tests cover crate sides near roof height, edge support, ceilings,
-fast movement and falls onto playable blocks on all ten maps in both realities.
-
-## Data and assets
-
-[Campaign JSON](../breach_shift/data/levels) ships inside the package.
-The loader uses `importlib.resources`, so starting a launcher from another
-directory does not change which maps it loads. Its optional directory argument
-still supports custom level definitions and validation tests.
-
-[Assets](../assets) holds character/environment concepts, references, future
-models, animations, textures and audio. Exported character and weapon meshes
-are loaded through [the model library](../breach_shift/art/library.py), with a
-source-builder fallback for an installed package. The initial art pass uses
-the existing logical actor roots and collision extents. Scene batching must
-preserve those roots and the limb pivots; use `flatten_local` for positioned
-anchors rather than baking their transforms away.
-
-## Development conventions
-
-- Put game behavior in its owning package and keep entry points small.
-- Keep JSON map definitions separate from presentation assets.
-- Keep health, ammunition, campaign progress and other state independent of the UI where practical.
-- Add future production assets to their designated folders and preserve actor roots/collision bounds.
-- Keep generated caches, local environments and build output out of version control.
-- Run [the test suite](../tests) after changing imports, geometry or game behavior.
+The [art workflow](./2d-art.md) restores known model data from local Git history
+only for optional offline baking. Model sources, Blender bundles and the old
+first-person implementation are retired from the working tree. Runtime package
+data is limited to map JSON, sprite PNG, sound WAV and provenance markdown.

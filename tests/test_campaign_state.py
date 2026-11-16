@@ -1,7 +1,7 @@
 import unittest
 
 from breach_shift.campaign.state import CampaignProgress
-from breach_shift.world.levels import load_levels
+from breach_shift.platformer.levels import load_side_levels
 from breach_shift.enemies.catalog import ZOMBIE_ORDER
 
 
@@ -34,7 +34,7 @@ class CampaignStateTests(unittest.TestCase):
         self.assertFalse(progress.complete)
 
     def test_map_rosters_introduce_exactly_one_new_kind_in_order(self):
-        levels = load_levels()
+        levels = load_side_levels()
         self.assertEqual(len(levels), 10)
         for level in levels:
             with self.subTest(level=level.name):

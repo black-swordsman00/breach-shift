@@ -28,15 +28,11 @@ class AudioTests(unittest.TestCase):
         self.assertEqual(loader.loadSfx.call_count, 4)
         self.assertEqual(len(bank.voices), 1)
 
-    def test_enemy_audio_is_positional_with_distance_falloff(self):
-        spatial = MagicMock()
-        spatial.loadSfx.side_effect = lambda path: MagicMock()
-        bank = SoundBank(MagicMock(), spatial, rng=Random(1))
-        enemy = object()
-        sound = bank.play("zombie_attack", node=enemy)
-        spatial.attachSoundToObject.assert_called_once_with(sound, enemy)
-        spatial.setSoundMinDistance.assert_called_once_with(sound, 3.0)
-        spatial.setSoundMaxDistance.assert_called_once_with(sound, 45.0)
+    def test_enemy_audio_accepts_distance_volume_and_clamps_playback_pitch(self):
+        bank = SoundBank(MagicMock(), rng=Random(1))
+        sound = bank.play("zombie_attack", volume=.3, pitch=99)
+        sound.setVolume.assert_called_once_with(.3)
+        sound.setPlayRate.assert_called_once_with(1.8)
 
     def test_mute_stops_playing_voices_and_prevents_new_sound(self):
         loader = MagicMock()
@@ -56,10 +52,12 @@ class AudioTests(unittest.TestCase):
         self.assertIsNone(bank.play("empty", now=1.1))
         self.assertIsNotNone(bank.play("empty", now=1.5))
 
-    def test_checkpoint_cleanup_detaches_enemy_voices(self):
-        spatial = MagicMock()
-        spatial.loadSfx.side_effect = lambda path: MagicMock()
-        bank = SoundBank(MagicMock(), spatial)
-        bank.play("zombie_attack", node=object())
+    def test_checkpoint_cleanup_stops_all_pooled_voices(self):
+        loader = MagicMock()
+        loader.loadSfx.side_effect = lambda path: MagicMock()
+        bank = SoundBank(loader)
+        bank.play("zombie_attack")
+        pool = bank.voices["attack.wav"]
+        previous = [sound.stop.call_count for sound in pool]
         bank.stop_all()
-        self.assertEqual(spatial.detachSound.call_count, 4)
+        self.assertEqual([sound.stop.call_count for sound in pool],[count+1 for count in previous])
