@@ -64,6 +64,14 @@ class BreachShift(ShowBase):
         sunlight_node.setHpr(-30, -60, 0)
         self.render.setLight(sunlight_node)
 
+        import simplepbr
+        from breach_shift.art.lighting import environment_map
+        self.render_pipeline = simplepbr.init(enable_shadows=False, enable_fog=True,
+                                             use_normal_maps=True, msaa_samples=2,
+                                             env_map=environment_map())
+        from breach_shift.art.color import atmosphere_input
+        self.setBackgroundColor(*atmosphere_input((.05, .05, .08)))
+
         #Movement
         self.move_speed = 5.0
         self.clock = ClockObject.getGlobalClock()

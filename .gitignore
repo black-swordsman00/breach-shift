@@ -6,6 +6,10 @@ build/
 dist/
 .pytest_cache/
 .ruff_cache/
+.tools/
+.cache/
+*.blend1
+*.blend2
 
 .env
 .env.*

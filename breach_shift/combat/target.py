@@ -33,7 +33,6 @@ class Target:
         self.model.reparentTo(self.root)
         self.model.setPos(0, 0, 0)
         self.model.setScale(2, 2, 2)
-        self.model.setTextureOff(1)
         self.model.setCollideMask(BitMask32.allOff())
 
         collider_node = CollisionNode(f"{self.name}-collider")

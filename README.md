@@ -2,7 +2,7 @@
 
 An offline Python/Panda3D first-person zombie campaign built around switching
 between **Normal** and **Breach** reality. Ten playable maps introduce ten enemy
-types. The game includes ten articulated procedural zombie models, four visible
+types. The game includes ten articulated Blender zombie models, four visible
 weapon models, ammunition pickups and escalating reinforcements. Levels use
 textured prototype geometry; the first courtyard includes snowy stone cover and
 fortress towers. [Concept art](./assets/concepts) remains the target for later art refinement.
@@ -105,7 +105,8 @@ Tests cover combat, collisions, navigation, safe Shift destinations, objectives,
 all ten campaign transitions, retry, and training/jump behavior. A physical
 keyboard/mouse playthrough and balance review remain manual checks.
 
-Rebuild all fourteen exported runtime models, or capture the real renderer:
+After building the Blender source library, install its fourteen runtime models
+or capture the real renderer:
 
 ```powershell
 .\.venv\Scripts\python.exe -m breach_shift.art.export
@@ -113,8 +114,14 @@ Rebuild all fourteen exported runtime models, or capture the real renderer:
 ```
 
 [Actual engine previews](./assets/previews/README.md) show the current game and models.
+The [local review gallery](./assets/previews/gallery.html) includes Blender
+portraits, statistics, sounds and editable source links.
+See [the Blender workflow](./docs/blender-workshop.md) to edit or rebuild them.
 
 Gameplay runs offline and uses no external services or runtime network access.
-Generated concept images are design references. Runtime models are reproducible
-Panda3D meshes; this is an initial procedural art pass rather than the finished
-high-detail appearance of the concept paintings.
+Generated concept images are design references. Character sources are editable
+Blender scenes with licensed CC0 anatomy and original costumes, painted decay,
+equipment and mutations. Runtime BAM.PZ models embed their textures and ship in
+the installed package. This is the first anatomical art pass; the detailed concept
+paintings remain the visual target. Full skeletal locomotion and final environment
+art are still future work.
