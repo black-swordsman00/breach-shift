@@ -135,6 +135,64 @@ def prepare_props():
     return result
 
 
+def industrial_details(bounds):
+    """Add real facade silhouettes and service details within perimeter solids."""
+    x0,x1,y0,y1=bounds
+    pieces=[]
+    paint=bpy.data.materials.get('Yard_Paint')
+    if paint is None:
+        paint=bpy.data.materials['concrete_wall_008'].copy()
+        paint.name='Yard_Paint'
+        shader=next(node for node in paint.node_tree.nodes if node.type=='BSDF_PRINCIPLED')
+        for link in list(shader.inputs['Base Color'].links):
+            paint.node_tree.links.remove(link)
+        shader.inputs['Base Color'].default_value=(.72,.56,.21,1)
+        shader.inputs['Roughness'].default_value=.85
+    MATERIALS['paint']=('Yard_Paint',2.71)
+    # The facades sit in the existing solid perimeter, so walking and routes
+    # remain consistent with their authored collision. No hidden obstacles.
+    for side in (-1,1):
+        x=x0-.3 if side<0 else x1+.3
+        for index,y in enumerate(range(int(y0)+9,int(y1),18)):
+            height=8.7+(index%3)*.8
+            pieces.append(block('ARCH_factory_facade',(x,y,height/2),(.6,17.7,height),'concrete',.02))
+            pieces.append(block('ARCH_factory_coping',(x,y,height-.08),(.72,17.85,.16),'steel',.02))
+            for offset in (-5,0,5):
+                pieces.append(block('ARCH_recessed_shutter',(x-side*.315,y+offset,6.4),
+                                    (.035,3.3,1.55),'steel',.01))
+                pieces.append(block('ARCH_window_sill',(x-side*.36,y+offset,5.59),
+                                    (.16,3.55,.12),'concrete',.01))
+            for z in (4.45,7.4):
+                pieces.append(block('ARCH_facade_band',(x-side*.32,y,z),
+                                    (.07,17.7,.10),'concrete',.01))
+    # A taller end building gives the yard an actual skyline and a readable
+    # destination instead of an unbroken four-metre box wall.
+    y=y1+.3
+    pieces.append(block('ARCH_containment_facade',(0,y,5.6),(x1-x0,.6,11.2),'brick',.02))
+    for z in (4.45,8.6,11.15):
+        pieces.append(block('ARCH_containment_trim',(0,y-.32,z),(x1-x0,.10,.17),'concrete',.02))
+    for x in range(int(x0)+5,int(x1),7):
+        pieces.append(block('ARCH_upper_shutter',(x,y-.32,7),(4,.04,2),'steel',.01))
+        pieces.append(block('ARCH_upper_lintel',(x,y-.38,8.09),(4.2,.18,.14),'concrete',.01))
+    for x in (-4.6,4.6):
+        for y in range(int(y0)+2,int(y1)-2,6):
+            pieces.append(block('ARCH_lane_marking',(x,y,.012),(.09,2.5,.008),'paint',0))
+    # A locally authored sign uses the existing licensed PBR material maps.
+    curve=bpy.data.curves.new('Containment_sign','FONT')
+    curve.body='QUARANTINE  /  SECTOR 01'
+    curve.align_x='CENTER';curve.size=.48;curve.extrude=.001
+    sign=bpy.data.objects.new('ARCH_containment_sign',curve)
+    bpy.context.collection.objects.link(sign)
+    sign.location=(0,y1-.04,9.45)
+    sign.rotation_euler=(math.pi/2,0,0)
+    curve.materials.append(paint)
+    bpy.ops.object.select_all(action='DESELECT')
+    sign.select_set(True);bpy.context.view_layer.objects.active=sign
+    bpy.ops.object.convert(target='MESH')
+    pieces.append(bpy.context.object)
+    return pieces
+
+
 def place(sources, label, location, heading=0, scale=1):
     source = sources[label]
     obj = source.copy()
@@ -192,12 +250,19 @@ def build():
             py = y if long_x else y-d/2+t
             architecture.append(block("ARCH_masonry_pier", (px,py,h/2),
                                       (.7,.7,h), "concrete"))
+    architecture.extend(industrial_details(level['bounds']))
     # Existing cover anchors become material-rich loading/containment platforms.
     # Everything large remains within the original collision footprints.
     collision_additions = []
     for index,(x,y,w,d,h) in enumerate(level["shared_blocks"]):
         architecture.append(block("ARCH_loading_platform", (x,y,h/2), (w,d,h), "concrete", .08))
         architecture.append(block("ARCH_platform_cap", (x,y,h-.045), (w,d,.09), "steel"))
+        for side in (-1,1):
+            architecture.append(block('ARCH_platform_edge_trim',(x,y+side*(d/2+.012),h-.15),
+                                      (w,.035,.10),'steel',.008))
+            for offset in (-w*.32,w*.32):
+                architecture.append(block('ARCH_platform_steel_rib',(x+offset,y+side*(d/2+.014),h/2),
+                                          (.085,.04,h-.2),'steel',.008))
         if index in (0,1):
             car_x = x + (1.5 if index == 0 else -1.5)
             props.append(place(sources,"wrecked-car",(car_x,y,h),0 if index==0 else 180))

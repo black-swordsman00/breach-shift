@@ -143,8 +143,8 @@ def build_environment(parent, level):
 def apply_atmosphere(render, breach, number):
     background = PALETTES[number][1]
     fog = Fog("breach-atmosphere" if breach else "environment-atmosphere")
-    color = (.075, .045, .11) if breach else background
+    color = (.13, .09, .18) if breach else ((.24,.29,.32) if number==1 else background)
     from breach_shift.art.color import atmosphere_input
     fog.setColor(*atmosphere_input(color))
-    fog.setExpDensity(.008 if number == 1 else .011)
+    fog.setExpDensity(.0035 if number == 1 else .008)
     render.setFog(fog)

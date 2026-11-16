@@ -39,7 +39,8 @@ class ProductionAssetTests(unittest.TestCase):
         low, high = model.getTightBounds()
         self.assertAlmostEqual(high.x-low.x, 61.3, delta=.1)
         self.assertGreater(high.y-low.y, 90)
-        self.assertLess(high.z-low.z, 5.3)
+        self.assertGreater(high.z-low.z,10)
+        self.assertLess(high.z-low.z,12)
         for texture in model.findAllTextures():
             self.assertTrue(texture.hasRamImage())
         model.removeNode()
