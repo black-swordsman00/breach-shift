@@ -1,0 +1,7 @@
+{
+  "kind": "runner", "name": "The Night Runner", "height": 1.8,
+  "age": "young", "sex": "female", "physique": "averagemuscle-minweight",
+  "skin": [0.44, 0.39, 0.34], "jacket": [0.055, 0.065, 0.070],
+  "trousers": [0.045, 0.05, 0.055], "accent": [0.56, 0.40, 0.075],
+  "style": "runner", "mouth": 0.35, "hunch": 13, "seed": 22
+}
