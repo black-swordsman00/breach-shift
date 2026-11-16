@@ -6,7 +6,7 @@ from pathlib import Path
 from panda3d.core import Filename, Loader, NodePath
 
 
-MODEL_ROOT = Path(__file__).resolve().parents[2] / "assets" / "models"
+MODEL_ROOT = Path(__file__).resolve().parents[1] / "data" / "models"
 
 
 @lru_cache(maxsize=24)
