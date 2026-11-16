@@ -19,4 +19,4 @@ include = ["breach_shift*"]
 namespaces = false
 
 [tool.setuptools.package-data]
-breach_shift = ["data/levels/*.json"]
+breach_shift = ["data/levels/*.json", "data/audio/*.wav"]
