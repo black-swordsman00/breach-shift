@@ -40,5 +40,5 @@ ZOMBIE_SPECS = {
     ZombieKind.HOWLER: ZombieSpec(320, 0.9, 11, 1.05, 1.3, (0.75, 0.2, 0.65, 1)),
     ZombieKind.STALKER: ZombieSpec(380, 1.8, 14, 1.05, 1.0, (0.25, 0.35, 0.5, 1)),
     ZombieKind.REGENERATOR: ZombieSpec(450, 1.0, 15, 1.05, 1.2, (0.2, 0.75, 0.7, 1)),
-    ZombieKind.WARDEN: ZombieSpec(800, 0.9, 35, 3.0, 3.0, (0.65, 0.15, 0.85, 1), 0.5, 2.6),
+    ZombieKind.WARDEN: ZombieSpec(800, 0.9, 35, 3.0, 3.0, (0.65, 0.15, 0.85, 1), 0.8, 2.6),
 }

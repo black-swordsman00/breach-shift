@@ -1,0 +1,41 @@
+{
+  "file": "spitter.glb",
+  "triangles": 11799,
+  "bytes": 5064528,
+  "provider": "Breach Shift / MakeHuman",
+  "source_triangles": 46988,
+  "uv_layers_preserved": true,
+  "forward": "+Y",
+  "up": "+Z",
+  "units": "metres",
+  "height": 1.8,
+  "rig": "skinned-humanoid",
+  "source_sha256": "893a1dcfef33373bb84fad237902c518b62664d89c8cb3af3bd218328a38f3c3",
+  "provenance": "local-authored",
+  "texture_size": 1024,
+  "physique": "standard",
+  "high_source_retained": true,
+  "animation_joints": [
+    "arm-left",
+    "arm-right",
+    "leg-left",
+    "leg-right"
+  ],
+  "bounds": [
+    [
+      -0.27094539999961853,
+      -0.22773581743240356,
+      0.0
+    ],
+    [
+      0.27094539999961853,
+      0.22773580253124237,
+      1.8000000715255737
+    ]
+  ],
+  "dimensions": [
+    0.5418907999992371,
+    0.45547161996364594,
+    1.8000000715255737
+  ]
+}

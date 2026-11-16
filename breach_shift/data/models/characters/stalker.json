@@ -1,0 +1,41 @@
+{
+  "file": "stalker.glb",
+  "triangles": 11800,
+  "bytes": 4905256,
+  "provider": "Breach Shift / MakeHuman",
+  "source_triangles": 42220,
+  "uv_layers_preserved": true,
+  "forward": "+Y",
+  "up": "+Z",
+  "units": "metres",
+  "height": 1.8,
+  "rig": "skinned-humanoid",
+  "source_sha256": "d1842f8fdc858b9d65618b694733a35b51240979bfa4cbb2d50ebcb5c5a2af6a",
+  "provenance": "local-authored",
+  "texture_size": 1024,
+  "physique": "standard",
+  "high_source_retained": true,
+  "animation_joints": [
+    "arm-left",
+    "arm-right",
+    "leg-left",
+    "leg-right"
+  ],
+  "bounds": [
+    [
+      -0.2723446786403656,
+      -0.2262861281633377,
+      0.0
+    ],
+    [
+      0.2723446786403656,
+      0.2262861132621765,
+      1.8000000715255737
+    ]
+  ],
+  "dimensions": [
+    0.5446893572807312,
+    0.4525722414255142,
+    1.8000000715255737
+  ]
+}

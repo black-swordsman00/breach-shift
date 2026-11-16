@@ -22,8 +22,13 @@ def make_zombie_model(kind: ZombieKind) -> NodePath:
     if not model.find("**/+Character").isEmpty():
         actor = _SkinnedZombieModel(model, copy=False)
         bundle = actor.getPartBundle("modelRoot")
-        for name in ("arm-left", "arm-right", "leg-left", "leg-right"):
+        required = ("arm-left", "arm-right", "leg-left", "leg-right")
+        optional = ("hips", "spine", "head", "forearm-left", "forearm-right",
+                    "hand-left", "hand-right", "shin-left", "shin-right", "foot-left", "foot-right")
+        for name in required + optional:
             if bundle.findChild(name) is None:
+                if name in optional:
+                    continue
                 actor.cleanup()
                 raise ValueError(f"Missing zombie animation joint: {kind.value}/{name}")
             actor.controlJoint(None, "modelRoot", name)
