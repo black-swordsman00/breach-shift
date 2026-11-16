@@ -1,0 +1,157 @@
+{
+  "number": 2,
+  "name": "Service Tunnels",
+  "introduced": "runner",
+  "theme": "tunnel",
+  "size": [
+    138,
+    18
+  ],
+  "player_spawn": [
+    3,
+    0
+  ],
+  "platforms": [
+    [
+      0,
+      -3,
+      138,
+      3
+    ],
+    [
+      14,
+      3.2,
+      15,
+      0.6
+    ],
+    [
+      33,
+      1.2,
+      8,
+      0.5
+    ],
+    [
+      47,
+      2.7,
+      9,
+      0.45,
+      true
+    ],
+    [
+      83,
+      2,
+      10,
+      0.45,
+      true
+    ],
+    [
+      102,
+      1.2,
+      8,
+      0.5
+    ],
+    [
+      119,
+      0,
+      2,
+      1.4
+    ]
+  ],
+  "normal_gate": [
+    63,
+    0,
+    0.75,
+    14
+  ],
+  "breach_gate": [
+    112,
+    0,
+    0.75,
+    14
+  ],
+  "core": [
+    88,
+    1.1
+  ],
+  "exit": [
+    135,
+    0
+  ],
+  "spawns": [
+    [
+      "walker",
+      14.0,
+      0
+    ],
+    [
+      "runner",
+      41.6,
+      0
+    ],
+    [
+      "runner",
+      59.6,
+      0
+    ],
+    [
+      "runner",
+      82.4,
+      0
+    ],
+    [
+      "runner",
+      110.8,
+      0
+    ],
+    [
+      "runner",
+      128.0,
+      0
+    ]
+  ],
+  "decor": [
+    [
+      "barricade",
+      8,
+      0,
+      1
+    ],
+    [
+      "barrel",
+      25,
+      0,
+      0.9
+    ],
+    [
+      "car",
+      39,
+      0,
+      1
+    ],
+    [
+      "lamp",
+      11,
+      0,
+      1
+    ],
+    [
+      "lamp",
+      76,
+      0,
+      1
+    ],
+    [
+      "crate",
+      97,
+      0,
+      1
+    ],
+    [
+      "debris",
+      124,
+      0,
+      1
+    ]
+  ],
+  "briefing": "Switch to Breach to cross the cyan gate and recover the core. Return to Normal, clear the infected and reach extraction."
+}

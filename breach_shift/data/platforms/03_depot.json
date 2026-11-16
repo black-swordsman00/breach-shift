@@ -1,0 +1,169 @@
+{
+  "number": 3,
+  "name": "Freight Depot",
+  "introduced": "brute",
+  "theme": "depot",
+  "size": [
+    148,
+    18
+  ],
+  "player_spawn": [
+    3,
+    0
+  ],
+  "platforms": [
+    [
+      0,
+      -3,
+      148,
+      3
+    ],
+    [
+      15,
+      0,
+      4,
+      1.2
+    ],
+    [
+      21,
+      0,
+      4,
+      2.4
+    ],
+    [
+      28,
+      3.4,
+      9,
+      0.5,
+      true
+    ],
+    [
+      44,
+      2.2,
+      10,
+      0.45,
+      true
+    ],
+    [
+      94,
+      0,
+      4,
+      1.2
+    ],
+    [
+      100,
+      0,
+      4,
+      2.3
+    ],
+    [
+      115,
+      3.4,
+      9,
+      0.45,
+      true
+    ]
+  ],
+  "normal_gate": [
+    68,
+    0,
+    0.75,
+    14
+  ],
+  "breach_gate": [
+    120,
+    0,
+    0.75,
+    14
+  ],
+  "core": [
+    95,
+    1.1
+  ],
+  "exit": [
+    145,
+    0
+  ],
+  "spawns": [
+    [
+      "walker",
+      14.0,
+      0
+    ],
+    [
+      "runner",
+      34.67,
+      0
+    ],
+    [
+      "brute",
+      55.33,
+      0
+    ],
+    [
+      "brute",
+      76.0,
+      0
+    ],
+    [
+      "brute",
+      99.07,
+      0
+    ],
+    [
+      "brute",
+      117.33,
+      0
+    ],
+    [
+      "brute",
+      138.0,
+      0
+    ]
+  ],
+  "decor": [
+    [
+      "barricade",
+      8,
+      0,
+      1
+    ],
+    [
+      "barrel",
+      25,
+      0,
+      0.9
+    ],
+    [
+      "car",
+      41,
+      0,
+      1
+    ],
+    [
+      "lamp",
+      11,
+      0,
+      1
+    ],
+    [
+      "lamp",
+      81,
+      0,
+      1
+    ],
+    [
+      "crate",
+      104,
+      0,
+      1
+    ],
+    [
+      "debris",
+      133,
+      0,
+      1
+    ]
+  ],
+  "briefing": "Switch to Breach to cross the cyan gate and recover the core. Return to Normal, clear the infected and reach extraction."
+}
