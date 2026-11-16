@@ -125,10 +125,11 @@ The first [Rodin rifle and skinned Walker](./docs/rodin-models.md) now run in-ga
 their detailed sources are retained for local refinement.
 
 Gameplay runs offline and uses no external services or runtime network access.
-Generated concept images are design references. Character sources are editable
-Blender scenes with licensed CC0 anatomy and original costumes, painted decay,
-equipment and mutations. Runtime BAM.PZ models embed their textures and ship in
-the installed package. Environment GLBs embed their textures and ship with a
-baked Poly Haven HDRI. This is the first anatomical art pass; the detailed concept
-paintings remain the visual target. Full skeletal locomotion and final environment
-art are still future work.
+Generated concept images are design references. Retained character sources use
+licensed CC0 anatomy and original costumes, painted decay, equipment and mutations.
+The Rodin rifle and Walker have generated geometry with local Blender optimization;
+the Walker uses a skinned skeleton. Editable sources retain their detailed meshes.
+Runtime BAM.PZ and GLB models embed textures and ship in the installed package,
+alongside the environment's baked Poly Haven HDRI. The concept paintings remain
+the visual target; authored locomotion clips and further environment art are
+future work.
