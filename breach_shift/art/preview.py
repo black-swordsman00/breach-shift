@@ -11,7 +11,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=("game", "roster", "weapons"), default="game")
     parser.add_argument("--output", type=Path, default=Path("assets/previews/gameplay.png"))
+    parser.add_argument("--model-dir", type=Path, help="inspect a candidate exported model library")
     arguments = parser.parse_args()
+    if arguments.model_dir is not None:
+        import breach_shift.art.library as library
+        library.MODEL_ROOT = arguments.model_dir.resolve()
     loadPrcFileData("preview", "audio-library-name null\nwin-size 1600 900\nsync-video false\nshow-frame-rate-meter false")
 
     from breach_shift.art.characters import make_zombie_model
@@ -34,6 +38,8 @@ def main() -> None:
         from direct.showbase.ShowBase import ShowBase
 
         game = ShowBase(windowType="offscreen")
+        import simplepbr
+        simplepbr.init(enable_shadows=False, use_normal_maps=True, msaa_samples=2)
         game.disableMouse()
         game.setBackgroundColor(.055, .065, .08)
         ambient = AmbientLight("preview-fill")
@@ -73,7 +79,7 @@ def main() -> None:
 
     try:
         for _ in range(5):
-            game.graphicsEngine.renderFrame()
+            game.taskMgr.step()
         arguments.output.parent.mkdir(parents=True, exist_ok=True)
         if not game.win.saveScreenshot(Filename.fromOsSpecific(str(arguments.output.resolve()))):
             raise RuntimeError("Unable to save the Panda3D preview.")
