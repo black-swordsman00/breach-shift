@@ -1,7 +1,8 @@
 import unittest
 from unittest.mock import MagicMock
 
-from panda3d.core import Camera, ClockObject, GraphicsWindow, KeyboardButton, NodePath, Point3
+from panda3d.core import (BitMask32, Camera, ClockObject, CollisionBox, CollisionNode,
+                         GraphicsWindow, KeyboardButton, NodePath, Point3)
 
 from breach_shift.core.game import BreachShift
 from breach_shift.training.session import TrainingSession
@@ -70,6 +71,52 @@ class JumpIntegrationTests(unittest.TestCase):
                 break
         self.assertTrue(self.game.jump_state.is_grounded)
         self.assertAlmostEqual(self.game.player.getZ(), 0.0)
+
+    def test_crouch_lowers_eyes_and_collision_and_reduces_movement_speed(self):
+        game=self.game
+        self.keyboard.isButtonDown.side_effect=lambda key:key==KeyboardButton.asciiKey('w')
+        game.press_crouch()
+        self.step()
+        self.assertTrue(game.stance.is_crouching)
+        self.assertAlmostEqual(game.player.getY(),-2+.25*.52,places=5)
+        self.assertEqual(game.player.getZ(),0)
+        self.assertLess(self.camera.getZ(),1.7)
+        self.assertAlmostEqual(game.player_collider.node().getSolid(0).getCenter().z,.55)
+        self.step(15)
+        self.assertAlmostEqual(self.camera.getZ(),1,places=4)
+
+    def test_releasing_crouch_under_an_overhang_waits_for_clearance(self):
+        game=self.game
+        ceiling=CollisionNode('low-overhang')
+        ceiling.setIntoCollideMask(BitMask32.bit(1))
+        ceiling.setFromCollideMask(BitMask32.allOff())
+        ceiling.addSolid(CollisionBox(Point3(-1,-3,1.15),Point3(1,-1,2)))
+        self.game.render.attachNewNode(ceiling)
+        game.press_crouch('control')
+        self.step(10)
+        game.release_crouch('control')
+        self.step(5)
+        self.assertTrue(game.stance.is_crouching)
+        self.assertLess(self.camera.getZ(),1.01)
+        game.player.setX(3)
+        self.step(15)
+        self.assertFalse(game.stance.is_crouching)
+        self.assertAlmostEqual(self.camera.getZ(),1.7,places=4)
+
+    def test_focus_loss_and_retry_release_held_crouch(self):
+        game=self.game
+        game.press_crouch()
+        self.step(4)
+        self.window.getProperties().getForeground.return_value=False
+        self.step()
+        self.assertFalse(game.crouch_inputs)
+        self.window.getProperties().getForeground.return_value=True
+        game.press_crouch('control')
+        self.step()
+        game.restart_training()
+        self.assertFalse(game.stance.is_crouching)
+        self.assertFalse(game.crouch_inputs)
+        self.assertAlmostEqual(self.camera.getZ(),1.7)
 
     def test_space_events_lift_player_and_camera_then_land(self):
         game = self.game

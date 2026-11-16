@@ -1,5 +1,6 @@
 from breach_shift.combat.target import Target
 from breach_shift.player.jump import PlayerJump
+from breach_shift.player.stance import PlayerStance
 from breach_shift.training.session import TrainingSession
 from breach_shift.combat.weapon import Weapon
 from random import uniform
@@ -52,22 +53,29 @@ class BreachShift(ShowBase):
 
         #Ambient Light
         ambient = AmbientLight("ambient")
-        ambient.setColor((0.3, 0.3, 0.3, 1))
+        ambient.setColor((.10, .115, .13, 1))
         ambient_node = self.render.attachNewNode(ambient)
         self.render.setLight(ambient_node)
 
         #Directional Light
 
         sunlight = DirectionalLight("sunlight")
-        sunlight.setColor((0.8, 0.8, 0.8, 1))
+        sunlight.setColor((1.8, 1.67, 1.48, 1))
+        sunlight.setShadowCaster(True,2048,2048)
+        sunlight.setCameraMask(BitMask32.bit(6))
+        sunlight.getLens().setFilmSize(44,44)
+        sunlight.getLens().setNearFar(1,95)
         sunlight_node = self.render.attachNewNode(sunlight)
-        sunlight_node.setHpr(-30, -60, 0)
+        sunlight_node.setPos(self.player.getPos()+Vec3(12,-18,26))
+        sunlight_node.lookAt(self.player.getPos()+Vec3(0,0,1))
+        self.sunlight_node = sunlight_node
         self.render.setLight(sunlight_node)
 
         import simplepbr
         from breach_shift.art.lighting import environment_map
-        self.render_pipeline = simplepbr.init(enable_shadows=False, enable_fog=True,
-                                             use_normal_maps=True, msaa_samples=2,
+        self.render_pipeline = simplepbr.init(enable_shadows=True, enable_fog=True,
+                                             use_normal_maps=True, msaa_samples=4,
+                                             shadow_bias=.0015,
                                              env_map=environment_map())
         from breach_shift.art.color import atmosphere_input
         self.setBackgroundColor(*atmosphere_input((.05, .05, .08)))
@@ -200,9 +208,9 @@ class BreachShift(ShowBase):
         return Task.cont
 
     def create_crosshair(self):
-        gap = 0.012
-        length = 0.022
-        thickness = 0.009
+        gap = 0.009
+        length = 0.018
+        thickness = 0.0035
 
 
         #Create one rectangular arm.
@@ -271,6 +279,14 @@ class BreachShift(ShowBase):
         if (window is None or not isinstance(window, GraphicsWindow)
                 or not window.getProperties().getForeground()):
             self.jump_held = False
+            if hasattr(self, "crouch_inputs"):
+                self.crouch_inputs.clear()
+
+        self.update_stance(dt)
+        sunlight = getattr(self,"sunlight_node",None)
+        if sunlight is not None:
+            sunlight.setPos(self.player.getPos()+Vec3(12,-18,26))
+            sunlight.lookAt(self.player.getPos()+Vec3(0,0,1))
 
         keyboard = self.mouseWatcherNode
 
@@ -293,7 +309,8 @@ class BreachShift(ShowBase):
         if direction.lengthSquared() > 0:
             direction.normalize()
 
-            movement = direction * self.move_speed * dt
+            stance = getattr(self, "stance", None)
+            movement = direction * self.move_speed * (stance.speed_factor if stance else 1) * dt
 
             self.player.setPos(self.player, movement)
         return Task.cont
@@ -318,6 +335,53 @@ class BreachShift(ShowBase):
 
     def release_jump(self):
         self.jump_held = False
+
+    def setup_stance(self):
+        self.stance = PlayerStance()
+        self.crouch_inputs = set()
+        for key in ("c", "control"):
+            self.accept(key, self.press_crouch, [key])
+            self.accept(key+"-up", self.release_crouch, [key])
+        for prefix in ("shift-","control-","control-shift-"):
+            self.accept(prefix+"c",self.press_crouch,["c"])
+            self.accept(prefix+"c-up",self.release_crouch,["c"])
+        self.accept("shift-control",self.press_crouch,["control"])
+        self.accept("shift-control-up",self.release_crouch,["control"])
+        for modifier in ("control", "control-shift", "shift-control"):
+            for event, callback in (("mouse1", self.shoot), ("r", self.reload_weapon),
+                                    ("space", self.jump_player), ("space-up", self.release_jump),
+                                    ("escape",self.userExit),("m",self.toggle_audio)):
+                self.accept(modifier+"-"+event, callback)
+        probe = CollisionNode("standing-clearance")
+        probe.addSolid(CollisionSphere(0, 0, 1.4, .395))
+        probe.setFromCollideMask(BitMask32.bit(1))
+        probe.setIntoCollideMask(BitMask32.allOff())
+        self.standing_probe = self.player.attachNewNode(probe)
+        self.standing_queue = CollisionHandlerQueue()
+        self.standing_traverser = CollisionTraverser("standing-clearance")
+        self.standing_traverser.addCollider(self.standing_probe, self.standing_queue)
+
+    def press_crouch(self, key="c"):
+        window = self.win
+        if (window is not None and isinstance(window, GraphicsWindow)
+                and window.getProperties().getForeground()):
+            self.crouch_inputs.add(key)
+
+    def release_crouch(self, key="c"):
+        self.crouch_inputs.discard(key)
+
+    def update_stance(self, dt):
+        if not hasattr(self, "stance"):
+            return
+        can_stand = True
+        if self.stance.is_crouching and not self.crouch_inputs:
+            self.standing_queue.clearEntries()
+            self.standing_traverser.traverse(self.render)
+            can_stand = self.standing_queue.getNumEntries() == 0
+        self.camera.setZ(self.stance.update(dt, bool(self.crouch_inputs), can_stand))
+        # Lower the actual obstacle and projectile hit volume as well as eyes.
+        self.player_collider.node().modifySolid(0).setCenter(
+            0, 0, .55 if self.stance.is_crouching else .9)
 
     def update_mouse_look(self, task):
         window = self.win
@@ -376,6 +440,7 @@ class BreachShift(ShowBase):
         player_node.setIntoCollideMask(BitMask32.allOff())
 
         self.player_collider = self.player.attachNewNode(player_node)
+        self.setup_stance()
 
         self.collision_pusher.addCollider(
             self.player_collider, self.player
@@ -532,6 +597,7 @@ class BreachShift(ShowBase):
             return
 
         self.play_sound("reload_start", volume=.55)
+        self.on_reload_started()
 
         self.update_weapon_hud()
 
@@ -546,8 +612,15 @@ class BreachShift(ShowBase):
         self.weapon.finish_reload()
         if was_reloading:
             self.play_sound("reload_finish", volume=.6)
+            self.on_reload_finished()
         self.update_weapon_hud()
         return Task.done
+
+    def on_reload_started(self):
+        """Allow a game mode to animate an accepted reload."""
+
+    def on_reload_finished(self):
+        """Allow a game mode to settle its reload pose."""
 
     def setup_shooting(self):
         camera = self.camera
@@ -728,7 +801,7 @@ class BreachShift(ShowBase):
 
     def setup_movement_hud(self):
         self.movement_hud = OnscreenText(
-            text="Space - Jump | Space again - Double Jump",
+            text="Space - Double Jump | C / Ctrl - Hold Crouch",
             parent=self.a2dBottomLeft,
             pos=(0.05, 0.10),
             scale=0.04,
@@ -750,6 +823,11 @@ class BreachShift(ShowBase):
         self.player.setH(0)
         self.jump_state.reset()
         self.jump_held = False
+        if hasattr(self, "stance"):
+            self.stance.reset()
+            self.crouch_inputs.clear()
+            self.camera.setZ(self.stance.standing_eye)
+            self.player_collider.node().modifySolid(0).setCenter(0, 0, .9)
         self.previous_player_z = self.player.getZ()
 
         self.camera_pitch = 0.0
