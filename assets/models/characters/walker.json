@@ -1,0 +1,20 @@
+{
+  "file": "walker.glb",
+  "triangles": 11800,
+  "bytes": 3692020,
+  "provider": "Hyper3D Rodin",
+  "source_triangles": 500000,
+  "uv_layers_preserved": true,
+  "forward": "+Y",
+  "up": "+Z",
+  "units": "metres",
+  "height": 1.8,
+  "rig": "skinned-humanoid",
+  "high_source_retained": true,
+  "animation_joints": [
+    "arm-left",
+    "arm-right",
+    "leg-left",
+    "leg-right"
+  ]
+}
