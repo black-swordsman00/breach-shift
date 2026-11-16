@@ -343,7 +343,8 @@ def build(kind, render):
     character = Infected(spec)
     studio(spec["height"])
     target = ROOT / "assets/blender/characters" / kind
-    save_asset(character.root, target, ROOT / "assets/previews/characters" / (kind + ".png") if render else None)
+    save_asset(character.root, target, ROOT / "assets/previews/characters" / (kind + ".png") if render else None,
+               export_path=ROOT / ".cache/blender-export/characters" / (kind + ".glb"))
     triangles = 0
     for child in character.root.children_recursive:
         if child.type == "MESH":

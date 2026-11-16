@@ -200,7 +200,7 @@ def studio(height, wide=False):
     return camera
 
 
-def save_asset(root, destination: Path, render_path: Path | None = None):
+def save_asset(root, destination: Path, render_path: Path | None = None, *, export_path: Path | None = None):
     destination.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.object.select_all(action="DESELECT")
     root.select_set(True)
@@ -209,7 +209,9 @@ def save_asset(root, destination: Path, render_path: Path | None = None):
     bpy.context.view_layer.objects.active = root
     bpy.context.view_layer.update()
     bpy.ops.wm.save_as_mainfile(filepath=str(destination.with_suffix(".blend")), compress=True)
-    bpy.ops.export_scene.gltf(filepath=str(destination.with_suffix(".glb")), export_format="GLB",
+    export_path = export_path or destination.with_suffix(".glb")
+    export_path.parent.mkdir(parents=True, exist_ok=True)
+    bpy.ops.export_scene.gltf(filepath=str(export_path), export_format="GLB",
                               use_selection=True, export_yup=True, export_extras=True,
                               export_materials="EXPORT", export_apply=True)
     if render_path:
