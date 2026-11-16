@@ -195,7 +195,9 @@ class CampaignGame(BreachShift):
         world.apply(self.reality.state, self.progress.core_collected)
         breach = self.reality.state is Reality.BREACH
         self.floor.setColor((0.18, 0.1, 0.24, 1) if breach else (0.22, 0.3, 0.28, 1))
-        self.setBackgroundColor((0.075, .035, .11) if breach else world.background)
+        background = (.075, .035, .11) if breach else world.background
+        from breach_shift.art.color import atmosphere_input
+        self.setBackgroundColor(atmosphere_input(background))
         world.environment.setColorScale((.72, .62, .92, 1) if breach else (1, 1, 1, 1))
         apply_atmosphere(self.render, breach, world.level.number)
         grid = world.grids[self.reality.state]
