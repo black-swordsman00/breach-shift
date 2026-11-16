@@ -3,9 +3,9 @@ from unittest.mock import MagicMock
 
 from panda3d.core import Camera, ClockObject, GraphicsWindow, KeyboardButton, NodePath, Point3
 
-from main import BreachShift
-from training_session import TrainingSession
-from weapon import Weapon
+from breach_shift.core.game import BreachShift
+from breach_shift.training.session import TrainingSession
+from breach_shift.combat.weapon import Weapon
 
 
 class JumpIntegrationTests(unittest.TestCase):

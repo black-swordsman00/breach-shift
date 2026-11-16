@@ -1,6 +1,6 @@
 import unittest
 
-from player_health import PlayerHealth
+from breach_shift.player.health import PlayerHealth
 
 
 class PlayerHealthTests(unittest.TestCase):

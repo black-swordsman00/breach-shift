@@ -2,9 +2,9 @@ import unittest
 
 from panda3d.core import BitMask32, CollisionHandlerQueue, CollisionNode, CollisionSegment, CollisionTraverser, NodePath, Point3
 
-from campaign_world import CampaignWorld
-from level_data import load_levels
-from reality import Reality
+from breach_shift.world.scene import CampaignWorld
+from breach_shift.world.levels import load_levels
+from breach_shift.world.reality import Reality
 
 
 class CampaignWorldTests(unittest.TestCase):
@@ -58,3 +58,8 @@ class CampaignWorldTests(unittest.TestCase):
         bounds = self.world.level.bounds
         self.assertFalse(self.world.destination_safe(Point3(bounds.max_x + 1, 0, 5), Reality.BREACH))
         self.assertFalse(self.world.destination_safe(Point3(0, bounds.max_y + 1, 5), Reality.NORMAL))
+
+    def test_scene_dressing_preserves_every_logical_collision_anchor(self):
+        for block, node in self.world.blocks:
+            with self.subTest(x=block.x, y=block.y):
+                self.assertEqual(node.getPos(), Point3(block.x, block.y, 0))

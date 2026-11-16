@@ -1,0 +1,7 @@
+{
+  "kind": "brute", "name": "The Foundry Worker", "height": 2.2,
+  "age": "young", "sex": "male", "physique": "maxmuscle-maxweight",
+  "skin": [0.34, 0.28, 0.22], "jacket": [0.11, 0.095, 0.075],
+  "trousers": [0.14, 0.09, 0.05], "accent": [0.38, 0.16, 0.045],
+  "style": "brute", "mouth": 0.55, "hunch": 9, "seed": 33
+}

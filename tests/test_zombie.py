@@ -2,14 +2,39 @@ import unittest
 
 from panda3d.core import NodePath, Point3
 
-from navigation import NavigationGrid
-from level_data import Block
-from reality import Reality
-from zombie import Zombie
-from zombie_catalog import ZombieKind
+from breach_shift.world.navigation import NavigationGrid
+from breach_shift.world.levels import Block
+from breach_shift.world.reality import Reality
+from breach_shift.enemies.zombie import Zombie
+from breach_shift.enemies.catalog import ZombieKind
 
 
 class ZombieTests(unittest.TestCase):
+    def test_slow_enemy_keeps_approaching_across_many_route_refreshes(self):
+        zombie = self.make(ZombieKind.WALKER)
+        player = Point3(0, 9, 0)
+        for frame in range(180):
+            zombie.update_ai(.05, frame * .05, player, Reality.NORMAL, self.grid, True)
+        self.assertGreater(zombie.root.getY(), 7)
+        self.assertLessEqual(zombie.root.getY(), 9)
+
+    def test_enemy_goes_around_cover_and_reaches_the_player(self):
+        grid = NavigationGrid((Block(0, 3, 3, 2, 2),), Reality.NORMAL)
+        zombie = self.make(ZombieKind.RUNNER)
+        player = Point3(0, 8, 0)
+        for frame in range(240):
+            zombie.update_ai(.05, frame * .05, player, Reality.NORMAL, grid, False)
+            self.assertTrue(grid.is_free(zombie.root.getX(), zombie.root.getY()))
+        self.assertLess((zombie.root.getPos() - player).length(), 1.2)
+
+    def test_enemy_approaches_a_closed_gate_without_crossing_it(self):
+        grid = NavigationGrid((Block(0, 8, 20, .6, 3.5),), Reality.NORMAL)
+        zombie = self.make(ZombieKind.WALKER)
+        for frame in range(200):
+            zombie.update_ai(.05, frame * .05, Point3(0, 12, 0), Reality.NORMAL, grid, False)
+        self.assertGreater(zombie.root.getY(), 6)
+        self.assertLess(zombie.root.getY(), 8)
+
     def setUp(self):
         self.render = NodePath("zombie-test-render")
         self.grid = NavigationGrid((), Reality.NORMAL)
@@ -40,15 +65,15 @@ class ZombieTests(unittest.TestCase):
     def test_armored_and_warden_damage_depend_on_reality(self):
         armor = self.make(ZombieKind.ARMORED)
         armor.take_damage(25)
-        self.assertEqual(armor.health, 113)
+        self.assertEqual(armor.health, armor.max_health - 12)
         armor.set_context(1, Reality.BREACH)
         armor.take_damage(25)
-        self.assertEqual(armor.health, 88)
+        self.assertEqual(armor.health, armor.max_health - 37)
         warden = self.make(ZombieKind.WARDEN)
         self.assertFalse(warden.take_damage(25))
         warden.set_context(1, Reality.BREACH)
         self.assertTrue(warden.take_damage(25))
-        self.assertEqual(warden.health, 275)
+        self.assertEqual(warden.health, warden.max_health - 25)
 
     def test_spitter_emits_projectiles_instead_of_instant_melee_damage(self):
         zombie = self.make(ZombieKind.SPITTER)
@@ -75,11 +100,11 @@ class ZombieTests(unittest.TestCase):
         zombie = self.make(ZombieKind.REGENERATOR)
         zombie.take_damage(25)
         zombie.update_ai(0.5, 1, Point3(0, 7, 0), Reality.NORMAL, self.grid, True)
-        self.assertEqual(zombie.health, 75)
+        self.assertEqual(zombie.health, zombie.max_health - 25)
         zombie.update_ai(0.5, 3, Point3(0, 7, 0), Reality.NORMAL, self.grid, True)
-        self.assertEqual(zombie.health, 79)
+        self.assertEqual(zombie.health, zombie.max_health - 21)
         zombie.update_ai(0.5, 4, Point3(0, 7, 0), Reality.BREACH, self.grid, True)
-        self.assertEqual(zombie.health, 79)
+        self.assertEqual(zombie.health, zombie.max_health - 21)
         zombie.take_damage(500)
         self.assertFalse(zombie.update_ai(1, 10, Point3(0, 7, 0), Reality.NORMAL, self.grid, True))
         self.assertEqual(zombie.health, 0)

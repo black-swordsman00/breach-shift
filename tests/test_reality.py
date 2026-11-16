@@ -1,6 +1,6 @@
 import unittest
 
-from reality import Reality, RealityShift
+from breach_shift.world.reality import Reality, RealityShift
 
 
 class RealityShiftTests(unittest.TestCase):

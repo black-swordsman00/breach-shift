@@ -1,8 +1,8 @@
 import unittest
 
-from campaign_state import CampaignProgress
-from level_data import load_levels
-from zombie_catalog import ZOMBIE_ORDER
+from breach_shift.campaign.state import CampaignProgress
+from breach_shift.world.levels import load_levels
+from breach_shift.enemies.catalog import ZOMBIE_ORDER
 
 
 class CampaignStateTests(unittest.TestCase):
