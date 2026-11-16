@@ -60,13 +60,14 @@ independent skinned-vertex deformation, plus the mixed-library export and wheel 
 
 ## Supplied Warden and motion milestone
 
-Seven meaningful follow-up commits cover export/privacy fixes, the supplied boss
+Eight meaningful follow-up commits cover export/privacy fixes, the supplied boss
 and ten skinned character assets, crouching/map practice, motion/reload/HUD,
-courtyard refinements, the verified visual handoff, and its final map render. This brings the branch
-to **66 history entries since the baseline**, including merges, with **20 pending
+courtyard refinements, the verified visual handoff, its final map render, and
+turning along the path around cover. This brings the branch
+to **67 history entries since the baseline**, including merges, with **21 pending
 commits ahead of its default-branch baseline**. These are history counts rather
 than credited profile-contribution totals. PR #16 remains a draft for review.
 
-Validation now passes 184 tests, full character skin deformation, packed-scene
+Validation now passes 185 tests, full character skin deformation, packed-scene
 checks, and a rendered installed-game check outside the source checkout. The
 follow-up reuses supplied and existing local assets without new cloud generation.

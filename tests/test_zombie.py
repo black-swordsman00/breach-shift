@@ -97,6 +97,13 @@ class ZombieTests(unittest.TestCase):
             self.assertFalse(wall.overlaps_xy(p.x,p.y,boss.spec.radius+.1))
         self.assertGreater(boss.root.getY(),6)
 
+    def test_walking_around_cover_turns_toward_travel_instead_of_sliding_sideways(self):
+        zombie=self.make(ZombieKind.WALKER)
+        zombie.root.setX(.1)
+        zombie.update_animation(.05,Point3(0,10,0))
+        self.assertLess(zombie.root.getH(),-20)
+        self.assertGreater(zombie.root.getH(),-90)
+
     def test_armored_and_warden_damage_depend_on_reality(self):
         armor = self.make(ZombieKind.ARMORED)
         armor.take_damage(25)

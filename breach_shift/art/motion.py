@@ -35,7 +35,8 @@ class ZombieMotion:
         dt = max(0, dt)
         self.time += dt
         position = self.root.getPos()
-        distance = hypot(position.x-self.position.x, position.y-self.position.y)
+        travel_x,travel_y=position.x-self.position.x,position.y-self.position.y
+        distance = hypot(travel_x,travel_y)
         self.position = Point3(position)
         if dead:
             self.death_time += dt
@@ -55,6 +56,8 @@ class ZombieMotion:
         # A stationary enemy never cycles its walk, including against a wall.
         self.phase += distance/stride * 2*pi
         dx, dy = player.x-position.x, player.y-position.y
+        if distance>.0001 and windup is None and now-attack>.45:
+            dx,dy=travel_x,travel_y
         if hypot(dx, dy) > .01:
             wanted = degrees(atan2(-dx, dy))
             delta = (wanted-self.root.getH()+180)%360-180
