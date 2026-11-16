@@ -1,0 +1,7 @@
+{
+  "kind": "leaper", "name": "The Escaped Patient", "height": 1.8,
+  "age": "young", "sex": "male", "physique": "minmuscle-minweight",
+  "skin": [0.38, 0.34, 0.28], "jacket": [0.38, 0.15, 0.055],
+  "trousers": [0.22, 0.105, 0.045], "accent": [0.16, 0.13, 0.10],
+  "style": "leaper", "mouth": 0.7, "hunch": 20, "seed": 55
+}
