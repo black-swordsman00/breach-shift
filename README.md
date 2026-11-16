@@ -138,6 +138,9 @@ The first [Rodin rifle and skinned Walker](./docs/rodin-models.md) now run in-ga
 their detailed sources are retained for local refinement.
 
 Gameplay runs offline and uses no external services or runtime network access.
+See the [ZombieModding source review](./docs/map-source-review.md) before
+selecting downloadable replacement maps. No third-party map installers are
+part of the game or its asset workflow.
 Generated concept images are design references. Retained character sources use
 licensed CC0 anatomy and original costumes, painted decay, equipment and mutations.
 The Rodin rifle and Walker have generated geometry with local Blender optimization;

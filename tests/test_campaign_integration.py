@@ -319,6 +319,27 @@ class CampaignIntegrationTests(unittest.TestCase):
                     distance = (game.player.getPos() - start).length()
                     self.assertAlmostEqual(distance, 6.5, places=4)
 
+    def test_every_campaign_crate_roof_catches_a_fast_fall_in_both_realities(self):
+        game = self.game
+        for index in range(len(game.levels)):
+            game.progress.level_index = index
+            game.load_level()
+            for reality in Reality:
+                game.world.apply(reality, False)
+                # The perimeter sits outside the playable boundary planes.
+                for block in game.levels[index].blocks:
+                    if not block.active(reality):
+                        continue
+                    with self.subTest(level=index + 1, reality=reality, block=block):
+                        game.player.setPos(block.x, block.y, block.height + .02)
+                        game.jump_state.reset()
+                        game.jump_state.leave_ground()
+                        game.jump_state.vertical_speed = -12
+                        game.update_movement(None)
+                        game.update_collisions(None)
+                        self.assertAlmostEqual(game.player.getZ(), block.height, places=4)
+                        self.assertTrue(game.jump_state.is_grounded)
+
     def test_objective_guidance_tracks_player_direction_and_nearby_interactions(self):
         game = self.game
         game.player.setPos(0, 0, 0)
