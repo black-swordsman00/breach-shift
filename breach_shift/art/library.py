@@ -1,4 +1,4 @@
-"""Prefer exported local BAM assets; source builders also support installed packages."""
+"""Load packaged assets; missing production art is an explicit error."""
 
 from functools import lru_cache
 from pathlib import Path
@@ -17,10 +17,12 @@ def _load(path: str) -> NodePath:
     return NodePath(node)
 
 
-def instantiate(relative_path: str, source) -> NodePath:
+def instantiate(relative_path: str) -> NodePath:
     path = MODEL_ROOT / relative_path
     compressed = path.with_name(path.name + ".pz")
     if compressed.is_file():
         path = compressed
-    template = _load(str(path)) if path.is_file() else source()
+    if not path.is_file():
+        raise FileNotFoundError(f"Missing packaged model: {relative_path}")
+    template = _load(str(path))
     return template.copyTo(NodePath("model-staging"))
