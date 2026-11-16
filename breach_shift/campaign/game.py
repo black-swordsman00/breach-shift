@@ -171,6 +171,11 @@ class CampaignGame(BreachShift):
                 (Vec3(0, -1, 0), Point3(0, bounds.max_y, 0))):
             boundaries.addSolid(CollisionPlane(Plane(normal, point)))
         self.world = CampaignWorld(self.render, self.load_single_model("models/box"), level)
+        pipeline = getattr(self, "render_pipeline", None)
+        if pipeline is not None:
+            from breach_shift.art.lighting import environment_map
+            pipeline.env_map = environment_map(
+                "courtyard" if self.world.environment.hasTag("production-environment") else "night")
         for spawn in level.spawns:
             self.spawn_zombie(spawn.kind, spawn.x, spawn.y)
         self.apply_reality()
