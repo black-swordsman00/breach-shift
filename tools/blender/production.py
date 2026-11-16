@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from pathlib import Path
 import subprocess
 
+import bmesh
 import bpy
 
 
@@ -61,8 +62,46 @@ def triangle_count(objects):
     return total
 
 
+def decimate_preserving_uvs(meshes, triangle_limit):
+    """Fit an exclusive game budget without remeshing or replacing UV layers."""
+    if not meshes or any(not obj.data.uv_layers for obj in meshes):
+        raise ValueError("Generated meshes must have UV maps")
+    source_count = triangle_count(meshes)
+    layers = {obj.name: {layer.name for layer in obj.data.uv_layers} for obj in meshes}
+    # Imported glTF often splits coincident positions at hard normal/UV seams.
+    # Weld positions before collapse; per-corner UV layers remain on the loops.
+    # Otherwise simplification deletes disconnected patches instead of retaining
+    # the closed surface, especially on generated hard-surface weapons.
+    for obj in meshes:
+        bm = bmesh.new()
+        bm.from_mesh(obj.data)
+        bmesh.ops.remove_doubles(bm, verts=list(bm.verts), dist=1e-6)
+        bm.to_mesh(obj.data)
+        bm.free()
+        obj.data.update()
+    for _ in range(5):
+        count = triangle_count(meshes)
+        if count < triangle_limit:
+            break
+        ratio = min(.95, (triangle_limit-200)/count)
+        for obj in meshes:
+            bpy.context.view_layer.objects.active = obj
+            modifier = obj.modifiers.new("Game budget with retained UVs", "DECIMATE")
+            modifier.decimate_type = "COLLAPSE"
+            modifier.ratio = ratio
+            modifier.use_collapse_triangulate = True
+            modifier.delimit = {"UV", "SEAM", "MATERIAL"}
+            bpy.ops.object.modifier_apply(modifier=modifier.name)
+    if triangle_count(meshes) >= triangle_limit:
+        raise ValueError("Unable to reach the strict triangle budget")
+    for obj in meshes:
+        if not layers[obj.name].issubset({layer.name for layer in obj.data.uv_layers}):
+            raise ValueError("Decimation lost a UV layer")
+    return source_count
+
+
 def export_glb(objects, path):
-    path = Path(path)
+    path = Path(path).resolve()
     path.parent.mkdir(parents=True, exist_ok=True)
     bpy.context.scene.unit_settings.system = "METRIC"
     bpy.context.scene.unit_settings.scale_length = 1.0
@@ -104,8 +143,9 @@ def private_scene_settings_removed():
 
 
 def save_clean_blend(path):
-    path = Path(path)
+    path = Path(path).resolve()
     path.parent.mkdir(parents=True, exist_ok=True)
+    bpy.data.orphans_purge(do_recursive=True)
     for image in bpy.data.images:
         if image.packed_file:
             image.filepath = "//textures/" + image.name.replace("/", "_").replace("\\", "_")

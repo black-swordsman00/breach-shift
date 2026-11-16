@@ -336,6 +336,9 @@ class Infected:
 
 
 def build(kind, render):
+    if (ROOT / "assets/models/characters" / (kind + ".glb")).is_file():
+        print(f"Skipping {kind}: preserve its reviewed Rodin source; use optimize_rodin_character.py")
+        return
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
     bpy.data.orphans_purge(do_recursive=True)
