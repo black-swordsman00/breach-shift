@@ -15,10 +15,12 @@ lighting. The user approved [the generated fortress appearance](../assets/concep
 on 2026-11-16. Its assignment to Quarantine Yard below is a proposed implementation choice.
 
 Concept images are visual proposals for review. They are not finished 3D models,
-rigs, animations, or screenshots of the current game. The running game now has
-an initial procedural 3D art pass: ten articulated zombie models, four weapons,
-textured level surfaces and fortress scenery. The concept images remain the
-visual quality target for later detailed modeling and texturing.
+rigs, animations, or screenshots of the current game. All ten zombie types now
+have editable Blender sources, with CC0 human anatomy, original painted decay,
+clothing and type-specific equipment. The game loads these exported textured
+models. Limb animation still uses rigid pivots, and the environment remains a
+prototype. The concept images remain the quality target for further sculpting,
+skeletal animation, materials and lighting.
 
 ## Character silhouettes
 
@@ -37,7 +39,7 @@ visual quality target for later detailed modeling and texturing.
 
 Use differences in age, anatomy, posture, clothing and facial structure to make
 types recognizable before relying on color. The reference sheet proposes the
-first five designs; the remaining descriptions are future development briefs.
+first five designs; all ten directions have a first Blender source implementation.
 
 ## Environment plan
 

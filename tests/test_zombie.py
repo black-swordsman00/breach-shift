@@ -10,6 +10,31 @@ from breach_shift.enemies.catalog import ZombieKind
 
 
 class ZombieTests(unittest.TestCase):
+    def test_slow_enemy_keeps_approaching_across_many_route_refreshes(self):
+        zombie = self.make(ZombieKind.WALKER)
+        player = Point3(0, 9, 0)
+        for frame in range(180):
+            zombie.update_ai(.05, frame * .05, player, Reality.NORMAL, self.grid, True)
+        self.assertGreater(zombie.root.getY(), 7)
+        self.assertLessEqual(zombie.root.getY(), 9)
+
+    def test_enemy_goes_around_cover_and_reaches_the_player(self):
+        grid = NavigationGrid((Block(0, 3, 3, 2, 2),), Reality.NORMAL)
+        zombie = self.make(ZombieKind.RUNNER)
+        player = Point3(0, 8, 0)
+        for frame in range(240):
+            zombie.update_ai(.05, frame * .05, player, Reality.NORMAL, grid, False)
+            self.assertTrue(grid.is_free(zombie.root.getX(), zombie.root.getY()))
+        self.assertLess((zombie.root.getPos() - player).length(), 1.2)
+
+    def test_enemy_approaches_a_closed_gate_without_crossing_it(self):
+        grid = NavigationGrid((Block(0, 8, 20, .6, 3.5),), Reality.NORMAL)
+        zombie = self.make(ZombieKind.WALKER)
+        for frame in range(200):
+            zombie.update_ai(.05, frame * .05, Point3(0, 12, 0), Reality.NORMAL, grid, False)
+        self.assertGreater(zombie.root.getY(), 6)
+        self.assertLess(zombie.root.getY(), 8)
+
     def setUp(self):
         self.render = NodePath("zombie-test-render")
         self.grid = NavigationGrid((), Reality.NORMAL)

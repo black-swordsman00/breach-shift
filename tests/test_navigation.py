@@ -6,6 +6,21 @@ from breach_shift.world.reality import Reality
 
 
 class NavigationTests(unittest.TestCase):
+    def test_swept_motion_cannot_cross_a_wall_even_when_both_ends_are_free(self):
+        grid = NavigationGrid((Block(0, 0, 8, .2, 3),), Reality.NORMAL)
+        self.assertTrue(grid.is_free(0, -2))
+        self.assertTrue(grid.is_free(0, 2))
+        self.assertFalse(grid.segment_is_free((0, -2), (0, 2)))
+        self.assertTrue(grid.segment_is_free((-6, -2), (-6, 2)))
+
+    def test_disconnected_enemy_gets_an_approach_route_up_to_the_barrier(self):
+        grid = NavigationGrid((Block(0, 8, 20, .6, 3.5),), Reality.NORMAL)
+        self.assertFalse(grid.find_path((0, 0), (0, 12)))
+        path = grid.pursuit_path((0, 0), (0, 12))
+        self.assertTrue(path)
+        self.assertGreater(path[-1][1], 6)
+        self.assertLess(path[-1][1], 8)
+
     def test_route_avoids_cover_instead_of_walking_through_it(self):
         block = Block(0, 2, 3, 3, 2)
         grid = NavigationGrid((block,), Reality.NORMAL)

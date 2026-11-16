@@ -35,6 +35,7 @@ class AmmoPickup:
         node.setZ(.49)
         node.setBillboardPointEye()
         node.setLightOff(2)
+        node.setShaderOff(2)
 
     def update(self, dt: float) -> bool:
         self.age += max(0, dt)
