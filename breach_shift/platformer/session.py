@@ -45,6 +45,7 @@ class Enemy:
     windup_until: float | None = None
     leap_until: float = 0
     phase: float = 0
+    next_voice: float = 0
 
 
 @dataclass
@@ -164,6 +165,7 @@ class SideSession:
         move_body(body, 0, -.01, self.solids)
         enemy = Enemy(identifier, kind, body, 100 if self.training else spec.health,
                       100 if self.training else spec.health)
+        enemy.next_voice = self.now + self.random.uniform(1,6)
         self.enemies[identifier] = enemy
         return enemy
 
@@ -314,6 +316,9 @@ class SideSession:
             enemy.facing = 1 if dx > 0 else -1
             start, target = (body.x, body.z + body.height * .65), (self.player.x, self.player.z + self.player.height * .6)
             visible = abs(dx) < 32 and self._clear_line(start, target)
+            if visible and abs(dx)<16 and self.now>=enemy.next_voice:
+                self.sound("zombie_idle",body.x,body.z)
+                enemy.next_voice = self.now + self.random.uniform(4,9)
             melee_reach = 1.05 if kind is ZombieKind.SPITTER else spec.reach
             in_reach = visible and abs(dx) < melee_reach and abs(self.player.z - body.z) < 1.3
             if enemy.windup_until is not None:

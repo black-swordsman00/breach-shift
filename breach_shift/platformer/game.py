@@ -9,6 +9,8 @@ from panda3d.core import (ClockObject, GraphicsWindow, KeyboardButton, Orthograp
                          TextNode, WindowProperties, loadPrcFileData)
 
 from breach_shift.audio.bank import SoundBank
+from breach_shift.combat.catalog import WEAPON_SPECS
+from breach_shift.enemies.catalog import ZOMBIE_SPECS
 from breach_shift.platformer.scenery import SideScenery, glow_texture, line, quad
 from breach_shift.platformer.session import Controls, SideSession
 from breach_shift.platformer.sprites import SpriteLibrary
@@ -114,6 +116,7 @@ class SideHUD:
         self.set_text(self.shift, "SHIFT READY" if ready == 0 else f"SHIFT RECHARGING  {ready:.1f}s")
         self.shift_bar.setSx(max(.001,1-ready/max(.001,session.reality.cooldown)))
         self.set_text(self.weapon, f"0{list(session.arsenal.weapons).index(session.arsenal.selected)+1}  {session.weapon.name.upper()}")
+        self.weapon.setFg(WEAPON_SPECS[session.arsenal.selected].color)
         self.set_text(self.ammo, f"{session.weapon.ammo:02}  /  {session.weapon.reserve_ammo:03}")
         self.set_text(self.reload, f"RELOADING {session.reload_progress*100:.0f}%" if session.weapon.is_reloading
                       else "R: RELOAD" if session.weapon.ammo < session.weapon.magazine_size else "MAGAZINE READY")
@@ -371,7 +374,7 @@ class SideViewGame(ShowBase):
             if enemy.health>0 and session.now-enemy.damaged_at<2.5:
                 x,z = enemy.body.x,enemy.body.z+enemy.body.height+.15
                 quad(self.effects,x-.4,z,.8,.04,(.1,.15,.15,1),order=48)
-                quad(self.effects,x-.4,z,.8*enemy.health/enemy.maximum,.04,(.8,.3,.32,1),order=49)
+                quad(self.effects,x-.4,z,.8*enemy.health/enemy.maximum,.04,ZOMBIE_SPECS[enemy.kind].color,order=49)
             if enemy.windup_until is not None:
                 x,z = enemy.body.x,enemy.body.z
                 quad(self.effects,x-4.5,z+.02,9,.09,(1,.25,.12,.8),order=46)
@@ -381,7 +384,7 @@ class SideViewGame(ShowBase):
         for pickup in session.pickups:
             if pickup.identifier not in self.pickup_nodes:
                 node = self.world_root.attachNewNode("ammo")
-                quad(node,-.22,0,.44,.25,(.62,.71,.42,1),order=32)
+                quad(node,-.22,0,.44,.25,WEAPON_SPECS[pickup.kind].color,order=32)
                 quad(node,-.12,.06,.24,.12,(.18,.24,.15,1),order=33)
                 self.pickup_nodes[pickup.identifier] = node
             self.pickup_nodes[pickup.identifier].setPos(pickup.x,0,pickup.z+.1+sin(session.now*3)*.045)

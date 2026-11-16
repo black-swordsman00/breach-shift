@@ -1,42 +1,25 @@
-# Audio and pursuit
+# 2D sound
 
-The game bundles eighteen original mono PCM effects. No recording downloads,
-audio service or account is needed at runtime. Four effects distinguish the
-pistol, SMG, rifle and shotgun. Further clips cover reload start/finish, dry
-fire, ammunition pickup, three growls, two hurt/death variations, attack,
-Howler call and Warden roar.
+Eighteen original mono PCM effects ship with the game: four gunshots, reload
+start/finish, empty, ammunition pickup, three growls, two hurt variations, two
+death variations, attack, howl and roar. No audio downloads or account is used.
 
-Weapon sounds follow successful shots and reload events. Enemy sounds use
-Panda3D's OpenAL 3D manager, with the player camera as listener and the enemy
-as source. Attenuation begins at 3 m, with a 45 m falloff range. Idle vocal
-events are emitted only within 40 m and are staggered between enemies.
-Small reusable voice pools bound memory and permit overlapping sounds.
-Press M to mute/unmute; map changes stop and detach old enemy voices.
+The [sound bank](../breach_shift/audio/bank.py) keeps a bounded pool of four
+voices per clip. The 2D view supplies volume from horizontal distance and clamps
+playback pitch. Nearby infected emit staggered growls; Howlers and the Warden
+have their own cues. M mutes/unmutes. Pause and retry stop old voices.
 
-Sources live in [the sound generator](../tools/audio/SfxSynth.cs), with a
-[PowerShell build helper](../tools/audio/Generate-Sfx.ps1). Generated WAV files
-ship in [package data](../breach_shift/data/audio). Windows filenames are
-converted to Panda3D's virtual filesystem notation before loading.
+Sources are [SfxSynth.cs](../tools/audio/SfxSynth.cs) and the
+[PowerShell generator](../tools/audio/Generate-Sfx.ps1). The generated
+[WAV files](../breach_shift/data/audio) remain game package data.
 
-For a silent real-backend decode and positional-audio check:
+For a silent check through the real OpenAL decoder:
 
 ```powershell
-$env:ALSOFT_DRIVERS = 'null'
-.\.venv\Scripts\python.exe -m tools.audio.check_playback
+$env:ALSOFT_DRIVERS='null'
+$env:PYTHONPATH='.'
+.\.venv\Scripts\python.exe tools/audio/check_playback.py
 ```
 
-The process-level null-driver setting belongs to this check, not normal gameplay.
-The [automated tests](../tests/test_audio.py) validate every bundled WAV, voice
-pool reuse, distance settings, dry-fire debouncing and mute/cleanup behavior.
-
-## Pursuit correction
-
-Replanning previously started at the nearest rounded cell, which could repeatedly
-pull a slow enemy back toward the same point. Movement now follows a direct
-clear segment or a route that omits that stale starting waypoint. A swept
-clearance check prevents passing through cover or a thin gate between frames.
-
-When a closed reality barrier separates the player and an enemy, the enemy
-approaches the closest reachable point rather than idling at its distant spawn.
-The barrier remains solid. Ranged attack distances, melee cooldowns, jumping
-avoidance and reality-specific rules remain in place.
+The tests validate PCM format, nonempty samples, bounded voice reuse, mute,
+empty-trigger throttling and cleanup. The former 3D audio manager is removed.

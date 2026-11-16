@@ -8,26 +8,30 @@ from zipfile import ZipFile
 def check(path):
     with ZipFile(path) as archive:
         names = archive.namelist()
-        for folder, expected in (("characters", 10), ("weapons", 4)):
-            models = [name for name in names if name.startswith(f"breach_shift/data/models/{folder}/")
-                      and name.endswith((".bam", ".bam.pz", ".glb"))]
-            unique = {Path(name).name.split(".")[0] for name in models}
-            if len(models) != expected or len(unique) != expected:
-                raise ValueError(f"Wheel contains {len(models)} {folder} models; expected {expected}")
-        for folder, suffix, expected in (("levels", ".json", 10), ("audio", ".wav", 18)):
+        if any(name.endswith((".glb",".blend",".bam",".bam.pz",".env")) for name in names):
+            raise ValueError("A retired 3D asset entered the 2D wheel.")
+        for folder, suffix, expected in (("platforms", ".json", 10), ("audio", ".wav", 18)):
             files = [name for name in names if name.startswith(f"breach_shift/data/{folder}/") and name.endswith(suffix)]
             if len(files) != expected:
                 raise ValueError(f"Wheel contains {len(files)} {folder} assets; expected {expected}")
-        root = "breach_shift/data/models/environments/"
-        contract = json.loads(archive.read(root+"quarantine_yard.json"))
-        required = [root+"quarantine_yard.glb", "breach_shift/data/lighting/courtyard.env",
-                    "breach_shift/data/lighting/courtyard-sky.png",
-                    "breach_shift/data/credits/production.md"]
-        required += [root+entry["file"] for entry in contract["phase_blocks"]]
+        root = "breach_shift/data/sprites/"
+        contract = json.loads(archive.read(root+"manifest.json"))
+        expected = {"player","walker","runner","brute","spitter","leaper","armored","howler",
+                    "stalker","regenerator","warden","pistol","smg","rifle","shotgun",
+                    "barricade","car","crate","barrel","lamp","debris"}
+        if set(contract["sprites"])!=expected:
+            raise ValueError("Incomplete or unused sprite content in wheel.")
+        required = [root+entry["file"] for entry in contract["sprites"].values()]
+        required += [root+"tiles/"+name+".png" for name in ("asphalt","concrete","brick","metal")]
+        required += ["breach_shift/data/credits/sprites.md"]
         for asset in required:
             if asset not in names or archive.getinfo(asset).file_size == 0:
                 raise ValueError(f"Wheel is missing production content: {asset}")
-    print(f"{path.name}: 14 character/weapon models, 5 environment GLBs, HDRI, 10 levels, 18 sounds packaged")
+        metadata_name = next(name for name in names if name.endswith(".dist-info/METADATA"))
+        dependencies = [line for line in archive.read(metadata_name).decode().splitlines() if line.startswith("Requires-Dist:")]
+        if len(dependencies)!=1 or "panda3d==1.10.16" not in dependencies[0]:
+            raise ValueError("Unexpected 2D runtime dependencies.")
+    print(f"{path.name}: 21 sprites, 4 tiles, 10 side-view maps and 18 sounds; Panda3D-only runtime")
 
 
 if __name__ == "__main__":

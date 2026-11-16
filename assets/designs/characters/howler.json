@@ -1,7 +1,0 @@
-{
-  "kind": "howler", "name": "The Mourner", "height": 1.8,
-  "age": "old", "sex": "male", "physique": "minmuscle-minweight",
-  "skin": [0.40, 0.31, 0.33], "jacket": [0.18, 0.045, 0.075],
-  "trousers": [0.085, 0.055, 0.065], "accent": [0.30, 0.19, 0.15],
-  "style": "howler", "mouth": 1.25, "hunch": 4, "seed": 77
-}

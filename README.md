@@ -90,8 +90,8 @@ difficulty balancing remain useful alongside automated checks.
 See [2D art and rebuilding](./docs/2d-art.md) and
 [asset credits](./breach_shift/data/credits/sprites.md). The optional baker
 reuses model data from local Git history, so obsolete 3D exports and Blender
-bundles are unnecessary in the working tree. The user's original downloaded
-sculpt is outside this project and is not modified.
+bundles are unnecessary in the working tree. One private source copy of the
+supplied sculpt remains in an ignored cache and is never packaged or pushed.
 
 Gameplay uses no network services, account login or API keys. No Fal.ai calls
 were made for the 2D conversion.

@@ -1,22 +1,13 @@
-# Actual engine previews
+# Actual 2D game previews
 
-Open the [interactive local model gallery](./gallery.html) to inspect individual
-Blender renders, compare actual HP/damage and listen to sound samples. Links open
-the corresponding editable Blender sources. Rebuild it with
-`python tools/art/build_gallery.py` after changing balance or designs.
+- [Side-view campaign](./side-view.png)
+- [Warden in Breach](./side-view-warden.png)
 
-The following group views are captured from Panda3D using the actual exported
-Blender models. They show the current anatomical art pass. The gameplay capture places two existing Walkers in view and equips
-the rifle for inspection; it does not change the shipped level definition.
+Both are captures of the actual orthographic renderer, not concept art.
+Rebuild with [the preview tool](../../tools/preview.py):
 
-- [Gameplay with the Poly Haven / Poly Pizza courtyard](./gameplay.png)
-- [Blender render of the production courtyard](./quarantine-yard-blender.png)
-- [All ten zombie models](./zombie-roster.png)
-- [All four weapon models](./weapons.png)
-
-Regenerate with `python -m breach_shift.art.preview --mode game`, `--mode roster`
-or `--mode weapons`, passing `--output` to choose the destination.
-
-The [character portraits](./characters) and [weapon portraits](./weapons) are
-rendered in Blender under studio lights; they are not gameplay screenshots.
-Neither set is a claim of final photorealistic art matching the concept paintings.
+```powershell
+$env:PYTHONPATH='.'
+.\.venv\Scripts\python.exe tools/preview.py
+.\.venv\Scripts\python.exe tools/preview.py --level 10 --boss --output assets/previews/side-view-warden.png
+```
