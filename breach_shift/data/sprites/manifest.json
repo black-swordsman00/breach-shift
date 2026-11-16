@@ -1,0 +1,379 @@
+{
+  "version": 1,
+  "source_revision": "d74159abc1ffb763524c9697d492d021a1d4f785",
+  "cell_size": 256,
+  "sprites": {
+    "player": {
+      "file": "player.png",
+      "width": 2048,
+      "height": 1536,
+      "frame": [
+        -2.9,
+        2.9,
+        -0.3,
+        3.5
+      ],
+      "columns": 8,
+      "rows": 6,
+      "states": {
+        "walk": 0,
+        "idle": 1,
+        "reload": 2,
+        "death": 3,
+        "crouch": 4,
+        "jump": 5
+      },
+      "sha256": "190a21a4bcf8c745b2d685911847cc1a1726151e9b1b4aeab39e109424a52ded"
+    },
+    "walker": {
+      "file": "walker.png",
+      "width": 2048,
+      "height": 1024,
+      "frame": [
+        -2.9,
+        2.9,
+        -0.3,
+        3.5
+      ],
+      "columns": 8,
+      "rows": 4,
+      "states": {
+        "walk": 0,
+        "idle": 1,
+        "attack": 2,
+        "death": 3
+      },
+      "sha256": "72dde71fada7e64891649e9af63ea58c89dd2a2baf0f97a69b45c81e8d7e2159"
+    },
+    "warden": {
+      "file": "warden.png",
+      "width": 2048,
+      "height": 1024,
+      "frame": [
+        -2.9,
+        2.9,
+        -0.3,
+        3.5
+      ],
+      "columns": 8,
+      "rows": 4,
+      "states": {
+        "walk": 0,
+        "idle": 1,
+        "attack": 2,
+        "death": 3
+      },
+      "sha256": "c8a419999729e19db426433cba3f92c3ad77be00f44a7773b9deb92cbea57b41"
+    },
+    "rifle": {
+      "file": "rifle.png",
+      "width": 256,
+      "height": 256,
+      "frame": [
+        -0.45,
+        1.35,
+        -0.75,
+        1.05
+      ],
+      "columns": 1,
+      "rows": 1,
+      "states": {},
+      "sha256": "094f20bd4c17bedc023a6d4fc76eae1073432a6d438d42c57b853cf2c7918953"
+    },
+    "car": {
+      "file": "car.png",
+      "width": 256,
+      "height": 256,
+      "frame": [
+        -2.4359998893737793,
+        2.4359998893737793,
+        -0.33599998474121096,
+        1.6817350578308106
+      ],
+      "columns": 1,
+      "rows": 1,
+      "states": {},
+      "sha256": "71e19ad45d5eae573413535aade0725fc81f2dc484406bb4e9c12278bd676928"
+    },
+    "runner": {
+      "file": "runner.png",
+      "width": 2048,
+      "height": 1024,
+      "frame": [
+        -2.9,
+        2.9,
+        -0.3,
+        3.5
+      ],
+      "columns": 8,
+      "rows": 4,
+      "states": {
+        "walk": 0,
+        "idle": 1,
+        "attack": 2,
+        "death": 3
+      },
+      "sha256": "21e18ca807822c77979f7da14702a9bfa0be20bb02b1ae42b481496b3d62f604"
+    },
+    "brute": {
+      "file": "brute.png",
+      "width": 2048,
+      "height": 1024,
+      "frame": [
+        -2.9,
+        2.9,
+        -0.3,
+        3.5
+      ],
+      "columns": 8,
+      "rows": 4,
+      "states": {
+        "walk": 0,
+        "idle": 1,
+        "attack": 2,
+        "death": 3
+      },
+      "sha256": "a45f78fbabc3c9d6d7a20d7ba57e5c5029fe1ace0fe4d2dd1541d2d77df05d28"
+    },
+    "spitter": {
+      "file": "spitter.png",
+      "width": 2048,
+      "height": 1024,
+      "frame": [
+        -2.9,
+        2.9,
+        -0.3,
+        3.5
+      ],
+      "columns": 8,
+      "rows": 4,
+      "states": {
+        "walk": 0,
+        "idle": 1,
+        "attack": 2,
+        "death": 3
+      },
+      "sha256": "56137a90b62fbd88a1e04a789cbd5ebf9c578c266ccaff0cb98de2e10e09ba4f"
+    },
+    "leaper": {
+      "file": "leaper.png",
+      "width": 2048,
+      "height": 1024,
+      "frame": [
+        -2.9,
+        2.9,
+        -0.3,
+        3.5
+      ],
+      "columns": 8,
+      "rows": 4,
+      "states": {
+        "walk": 0,
+        "idle": 1,
+        "attack": 2,
+        "death": 3
+      },
+      "sha256": "a6bbaf745607b7b06bbcdd1df6ee799cca1a770e52230cc609c2122c289bcb10"
+    },
+    "armored": {
+      "file": "armored.png",
+      "width": 2048,
+      "height": 1024,
+      "frame": [
+        -2.9,
+        2.9,
+        -0.3,
+        3.5
+      ],
+      "columns": 8,
+      "rows": 4,
+      "states": {
+        "walk": 0,
+        "idle": 1,
+        "attack": 2,
+        "death": 3
+      },
+      "sha256": "171a1904a006d754f83cbe65578898947bbdda6666c93a01fa10244d24c9ea33"
+    },
+    "howler": {
+      "file": "howler.png",
+      "width": 2048,
+      "height": 1024,
+      "frame": [
+        -2.9,
+        2.9,
+        -0.3,
+        3.5
+      ],
+      "columns": 8,
+      "rows": 4,
+      "states": {
+        "walk": 0,
+        "idle": 1,
+        "attack": 2,
+        "death": 3
+      },
+      "sha256": "616072a1b0616b961a0c9b90b2638c15f23b731ccbd7eb0dc08388e5e145ab0a"
+    },
+    "stalker": {
+      "file": "stalker.png",
+      "width": 2048,
+      "height": 1024,
+      "frame": [
+        -2.9,
+        2.9,
+        -0.3,
+        3.5
+      ],
+      "columns": 8,
+      "rows": 4,
+      "states": {
+        "walk": 0,
+        "idle": 1,
+        "attack": 2,
+        "death": 3
+      },
+      "sha256": "e9c928d5a655901c0940d2270a58bcc72c27b54632f9adaa7d00ab8e5a52c979"
+    },
+    "regenerator": {
+      "file": "regenerator.png",
+      "width": 2048,
+      "height": 1024,
+      "frame": [
+        -2.9,
+        2.9,
+        -0.3,
+        3.5
+      ],
+      "columns": 8,
+      "rows": 4,
+      "states": {
+        "walk": 0,
+        "idle": 1,
+        "attack": 2,
+        "death": 3
+      },
+      "sha256": "5b7ae507da8dd773b672e7d538ae391a9241d864da5480de9c35ba9c5cc57b82"
+    },
+    "pistol": {
+      "file": "pistol.png",
+      "width": 256,
+      "height": 256,
+      "frame": [
+        -0.45,
+        1.35,
+        -0.75,
+        1.05
+      ],
+      "columns": 1,
+      "rows": 1,
+      "states": {},
+      "sha256": "751fd1736c811deb4daa9ea4fe9fb3c1a52ba5b9480e7280e469fd5a27cf1e95"
+    },
+    "smg": {
+      "file": "smg.png",
+      "width": 256,
+      "height": 256,
+      "frame": [
+        -0.45,
+        1.35,
+        -0.75,
+        1.05
+      ],
+      "columns": 1,
+      "rows": 1,
+      "states": {},
+      "sha256": "2bc7e9b39003db07ab4e0b67e7e756d97dc71fe1e88d41fddb9b824c39a055f4"
+    },
+    "shotgun": {
+      "file": "shotgun.png",
+      "width": 256,
+      "height": 256,
+      "frame": [
+        -0.45,
+        1.35,
+        -0.75,
+        1.05
+      ],
+      "columns": 1,
+      "rows": 1,
+      "states": {},
+      "sha256": "5de68fbfe1b9ed1364d2c7aa334329c1692fa301f7aea8403e44444984921ff8"
+    },
+    "barricade": {
+      "file": "barricade.png",
+      "width": 256,
+      "height": 256,
+      "frame": [
+        -1.3920000553131104,
+        1.3920000553131104,
+        -0.19200000762939454,
+        2.199576234817505
+      ],
+      "columns": 1,
+      "rows": 1,
+      "states": {},
+      "sha256": "38270a7d394583c94ba1d2ee4b6ae07e9cbc436dfb6e5e023c4b9a12a20ceba2"
+    },
+    "crate": {
+      "file": "crate.png",
+      "width": 256,
+      "height": 256,
+      "frame": [
+        -0.6089999723434448,
+        0.6089999723434448,
+        -0.08399999618530274,
+        1.1339176940917968
+      ],
+      "columns": 1,
+      "rows": 1,
+      "states": {},
+      "sha256": "44958831dc8adf86ff57419b821ceb45826d510b8d9726e8a8cd016d64c8df5d"
+    },
+    "barrel": {
+      "file": "barrel.png",
+      "width": 256,
+      "height": 256,
+      "frame": [
+        -0.4631864845752716,
+        0.4631864845752716,
+        -0.07999999523162842,
+        1.0799999356269836
+      ],
+      "columns": 1,
+      "rows": 1,
+      "states": {},
+      "sha256": "515ee26dd243f8e66f17b928019a2eb5d0be13aaadd4c2cb35476e8dcbd1f387"
+    },
+    "lamp": {
+      "file": "lamp.png",
+      "width": 256,
+      "height": 256,
+      "frame": [
+        -1.3237362575531006,
+        1.3237362575531006,
+        -0.3999999237060547,
+        5.399998970031739
+      ],
+      "columns": 1,
+      "rows": 1,
+      "states": {},
+      "sha256": "beb09e2435ff7c7f623d78f2b5b939339b5ae5ede0d971a9835dd6b790cbc033"
+    },
+    "debris": {
+      "file": "debris.png",
+      "width": 256,
+      "height": 256,
+      "frame": [
+        -0.87,
+        0.87,
+        -0.12,
+        0.2133763012290001
+      ],
+      "columns": 1,
+      "rows": 1,
+      "states": {},
+      "sha256": "8945f45a957f5d4578e918194314fce9c672f5b1f383ac0e996280d45a3fdcf7"
+    }
+  }
+}
