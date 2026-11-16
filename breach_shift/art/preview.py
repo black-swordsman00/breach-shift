@@ -41,17 +41,18 @@ def main() -> None:
         import simplepbr
         simplepbr.init(enable_shadows=False, use_normal_maps=True, msaa_samples=2)
         game.disableMouse()
-        game.setBackgroundColor(.055, .065, .08)
+        from breach_shift.art.color import atmosphere_input
+        game.setBackgroundColor(*atmosphere_input((.035, .045, .06)))
         ambient = AmbientLight("preview-fill")
-        ambient.setColor((.5, .52, .55, 1))
+        ambient.setColor((.72, .76, .82, 1))
         game.render.setLight(game.render.attachNewNode(ambient))
         key = DirectionalLight("preview-key")
-        key.setColor((.9, .82, .70, 1))
+        key.setColor((1.7, 1.5, 1.25, 1))
         light = game.render.attachNewNode(key)
         light.setHpr(-30, -40, 0)
         game.render.setLight(light)
         if arguments.mode == "roster":
-            game.camera.setPos(0, -10, 2.8)
+            game.camera.setPos(0, -12, 2.7)
             game.camera.lookAt(0, 0, 2.7)
             game.camLens.setFov(55)
             for index, kind in enumerate(ZOMBIE_ORDER):
@@ -68,6 +69,7 @@ def main() -> None:
                 node.setScale(.16)
                 node.setBillboardPointEye()
                 node.setLightOff(2)
+                node.setShaderOff(2)
         else:
             game.camera.setPos(1.7, -2.9, 1.6)
             game.camera.lookAt(0, .2, 0)
