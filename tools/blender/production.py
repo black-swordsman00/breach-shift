@@ -1,6 +1,8 @@
 """Blender-only export helpers for self-contained, privacy-safe production GLBs."""
 from contextlib import contextmanager
+import json
 from pathlib import Path
+import struct
 import subprocess
 
 import bmesh
@@ -17,19 +19,29 @@ def prepare_game_textures(materials, maximum_size=1024):
             if node.type != "TEX_IMAGE" or node.image is None:
                 continue
             source = node.image
-            if source.name.endswith("_game_1k"):
+            if (max(source.size) <= maximum_size and source.depth <= 32
+                    and not source.is_float and source.packed_file):
+                # Keep existing 8-bit maps verbatim when no resize is needed.
+                # Sharing them with the retained source avoids duplicating
+                # identical packed textures in every editable scene.
+                continue
+            suffix = f"_game_{maximum_size // 1024}k"
+            if source.name.endswith(suffix):
                 continue
             if source.name not in converted:
                 width, height = source.size
                 factor = min(1.0, maximum_size / max(width, height))
                 width, height = max(1, round(width*factor)), max(1, round(height*factor))
-                source.scale(width, height)
-                image = bpy.data.images.new(source.name + "_game_1k", width=width, height=height,
+                # Preserve the detailed packed source for future local edits.
+                working = source.copy()
+                working.scale(width, height)
+                image = bpy.data.images.new(source.name + suffix, width=width, height=height,
                                             alpha=True, float_buffer=False,
                                             is_data=source.colorspace_settings.is_data)
                 image.colorspace_settings.name = source.colorspace_settings.name
-                image.pixels[:] = source.pixels[:]
+                image.pixels[:] = working.pixels[:]
                 image.pack()
+                bpy.data.images.remove(working)
                 converted[source.name] = image
                 source.use_fake_user = False
             node.image = converted[source.name]
@@ -112,13 +124,24 @@ def export_glb(objects, path):
     bpy.context.view_layer.update()
     bpy.ops.file.pack_all()
     bpy.ops.export_scene.gltf(
-        filepath=str(path), export_format="GLB", use_selection=True,
+        filepath=str(path), export_format="GLB", use_selection=True, use_active_scene=True,
         export_yup=True, export_apply=True, export_extras=False,
         export_materials="EXPORT", export_texcoords=True,
         export_normals=True, export_tangents=True,
         export_cameras=False, export_lights=False,
     )
-    return {"file": path.name, "triangles": triangle_count(objects),
+    # Compare the saved payload, not just the Blender selection. Hidden objects
+    # and other open scenes must never silently enter (or replace) this asset.
+    raw=path.read_bytes()
+    size=struct.unpack_from('<I',raw,12)[0]
+    document=json.loads(raw[20:20+size])
+    accessors=document.get('accessors',[])
+    actual=sum(accessors[primitive['indices']]['count']//3
+               for mesh in document.get('meshes',[]) for primitive in mesh['primitives'])
+    expected=triangle_count(objects)
+    if actual != expected or not actual:
+        raise ValueError(f'Exported geometry mismatch: {actual} triangles, expected {expected}')
+    return {"file": path.name, "triangles": actual,
             "bytes": path.stat().st_size}
 
 
@@ -149,6 +172,8 @@ def save_clean_blend(path):
     for image in bpy.data.images:
         if image.packed_file:
             image.filepath = "//textures/" + image.name.replace("/", "_").replace("\\", "_")
+            for packed in image.packed_files:
+                packed.filepath=image.filepath
     for text in list(bpy.data.texts):
         bpy.data.texts.remove(text)
     bpy.context.scene.render.filepath = "//renders/"

@@ -19,6 +19,8 @@ textures = [image for image in bpy.data.images if image.type not in {'RENDER_RES
 for image in textures:
     if not image.packed_file or not image.filepath.replace('\\','/').startswith('//textures/'):
         raise ValueError("A texture is unpacked or contains an external filesystem path")
+    if any(not packed.filepath.replace('\\','/').startswith('//textures/') for packed in image.packed_files):
+        raise ValueError('A packed image retains a private original source path')
 for obj in bpy.context.scene.objects:
     if obj.type == 'MESH':
         if obj.location.length > 1e-5 or any(abs(value-1)>1e-5 for value in obj.scale) or any(abs(value)>1e-5 for value in obj.rotation_euler):
