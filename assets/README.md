@@ -5,6 +5,8 @@
 | [concepts/characters](./concepts/characters) | Generated character-design proposals; original and revised versions stay separate. |
 | [concepts/environments](./concepts/environments) | Environment-design proposals for visual review. |
 | [references/environments](./references/environments) | User-supplied environment inspiration. |
+| [blender/characters](./blender/characters) | Ten editable character scenes with packed textures and review lighting. |
+| [designs/characters](./designs/characters) | Individual character proportions, colors and costume styles. |
 | [Runtime characters](../breach_shift/data/models/characters) | Packaged runtime zombie models, including the female Runner. |
 | [Runtime weapons](../breach_shift/data/models/weapons) | Packaged weapon models used by the first-person view. |
 | [Runtime environments](../breach_shift/data/models/environments) | Reserved for exported modular map meshes and props. |
@@ -13,8 +15,9 @@
 | [Runtime audio](../breach_shift/data/audio) | Original weapon effects and positional zombie voices. |
 | [previews](./previews) | Actual Panda3D screenshots for checking the current implementation. |
 
-Models are generated from [their source builders](../breach_shift/art) with
-`python -m breach_shift.art.export`. The game loads these BAM files in a source
+Characters are authored by [the Blender workshop tools](../tools/blender) and
+installed with `python -m breach_shift.art.export` after GLB generation.
+The game loads the compressed BAM.PZ files in a source
 checkout and includes the same runtime models in the installable Python package.
 Empty animation and environment-model folders reserve space for later
 production work. PNG concept sheets remain visual design references.
